@@ -6,8 +6,12 @@
   delivery:   gzip / brotli compression, Cache-Control on static assets, CDN, HTTP/1.1 vs HTTP/2 / HTTP/3,
               preload / preconnect / dns-prefetch hints
   optional:   --lighthouse runs Google Lighthouse (npx) for Speed Index and Lighthouse's performance score
+              (12b_lighthouse_checker.py runs the full Lighthouse audit on every page)
 
-  python "py files/12_performance_checker.py" [--base URL] [--pages all] [--lighthouse]
+  Every discovered page is measured (--pages sample for a quick run), each in a fresh browser context (cold cache,
+  like a first visit), --browser-workers Chrome instances in parallel.
+
+  python "py files/12_performance_checker.py" [--base URL] [--pages sample] [--browser-workers 4] [--lighthouse]
   needs:  pip install playwright   (uses your installed Google Chrome)
 """
 import json
@@ -16,8 +20,8 @@ import subprocess
 from collections import Counter, defaultdict
 from urllib.parse import urlparse
 
-from seo_common import (COLLECT_METRICS_JS, CRITICAL, IMPORTANT, OPTIMIZATION, PERF_INIT_SCRIPT, Audit, Browser,
-                        load_site, parse_args, rate, scroll_page, select_pages, simulate_interactions)
+from seo_common import (COLLECT_METRICS_JS, CRITICAL, IMPORTANT, OPTIMIZATION, PERF_INIT_SCRIPT, Audit, load_site,
+                        parse_args, rate, run_browser_pages, scroll_page, select_pages, simulate_interactions)
 
 BUDGET = {"js": 400 * 1024, "css": 100 * 1024, "img": 1500 * 1024, "font": 200 * 1024, "total": 2500 * 1024,
           "requests": 80, "third_party": 15, "dom": 1500}
@@ -25,8 +29,7 @@ CDN_HEADERS = {"cf-ray": "Cloudflare", "x-vercel-id": "Vercel", "x-nf-request-id
                "x-served-by": "Fastly", "x-akamai-transformed": "Akamai", "x-azure-ref": "Azure Front Door"}
 
 args = parse_args("Performance checker", lambda ap: ap.add_argument("--lighthouse", action="store_true",
-                                                                    help="also run Lighthouse (npx) for Speed Index"),
-                  default_pages="sample")
+                                                                    help="also run Lighthouse (npx) for Speed Index"))
 site, urls = load_site(args)
 pages = select_pages(urls, args)
 audit = Audit("12_performance", "Performance Report", "Performance", site)
@@ -118,149 +121,160 @@ def lighthouse(url):
         return None
 
 
-print(f"Measuring {len(pages)} pages in Chrome ...")
-with Browser() as browser:
-    ctx = browser.context(width=1440, height=900)
-    ctx.add_init_script(PERF_INIT_SCRIPT)
-    for n, loc in enumerate(pages, 1):
-        audit.checked(loc)
-        page = ctx.new_page()
-        responses, failed, sheets = [], [], {}
-        page.on("response", lambda r: responses.append(r))
-        page.on("requestfailed", lambda r: failed.append((r.url, r.failure)))
-        cdp = ctx.new_cdp_session(page)
-        cdp.on("CSS.styleSheetAdded", lambda e: sheets.__setitem__(e["header"]["styleSheetId"], e["header"].get("length", 0)))
-        try:
-            coverage_start(cdp)
-            page.goto(site.to_fetch(loc), wait_until="load", timeout=90000)
-            page.wait_for_timeout(1500)
-            scroll_page(page)
-            simulate_interactions(page)
-            page.wait_for_timeout(500)
-            m = page.evaluate(COLLECT_METRICS_JS)
-            js_total, js_unused, css_total, css_unused = coverage_stop(cdp, sheets)
-        except Exception as e:
-            audit.add(loc, CRITICAL, "Load", "Page failed to load in Chrome", current=str(e)[:200])
-            page.close()
-            continue
-
-        page_host = urlparse(site.to_fetch(loc)).netloc
-        by_kind = Counter()
-        third = [r for r in m["resources"] if urlparse(r["url"]).netloc not in (page_host, site.site_host)]
-        for r in m["resources"]:
-            by_kind[kind(r)] += r["size"] or r["body"] or 0
-        total_bytes = sum(by_kind.values()) + (m["htmlTransfer"] or 0)
-        blocking = [r["url"] for r in m["resources"] if r["blocking"] == "blocking"]
-
-        # response headers: compression / caching / CDN / protocol
-        doc_headers = {}
-        uncompressed, uncached = [], []
-        cdn = ""
-        for r in responses:
-            try:
-                h = {k.lower(): v for k, v in r.headers.items()}
-            except Exception:
-                continue
-            url = r.url
-            if r.request.resource_type == "document" and not doc_headers:
-                doc_headers = h
-            for header, name in CDN_HEADERS.items():
-                if header in h:
-                    cdn = name
-            if "netlify" in h.get("server", "").lower():
-                cdn = cdn or "Netlify"
-            internal = urlparse(url).netloc in (page_host, site.site_host)
-            rtype = r.request.resource_type
-            if internal and rtype in ("document", "script", "stylesheet") and r.status == 200:
-                if h.get("content-encoding", "") not in ("br", "gzip", "zstd", "deflate"):
-                    uncompressed.append(url.split("?")[0][-150:])
-            if internal and "/_next/static/" in url and r.status == 200:
-                cc = h.get("cache-control", "")
-                if "max-age=31536000" not in cc and "immutable" not in cc:
-                    uncached.append((url.split("?")[0][-120:], cc))
+def _measure(ctx, loc):
+    audit.checked(loc)
+    page = ctx.new_page()
+    responses, failed, sheets = [], [], {}
+    page.on("response", lambda r: responses.append(r))
+    page.on("requestfailed", lambda r: failed.append((r.url, r.failure)))
+    cdp = ctx.new_cdp_session(page)
+    cdp.on("CSS.styleSheetAdded", lambda e: sheets.__setitem__(e["header"]["styleSheetId"], e["header"].get("length", 0)))
+    try:
+        coverage_start(cdp)
+        page.goto(site.to_fetch(loc), wait_until="load", timeout=90000)
+        page.wait_for_timeout(1500)
+        scroll_page(page)
+        simulate_interactions(page)
+        page.wait_for_timeout(500)
+        m = page.evaluate(COLLECT_METRICS_JS)
+        js_total, js_unused, css_total, css_unused = coverage_stop(cdp, sheets)
+    except Exception as e:
+        audit.add(loc, CRITICAL, "Load", "Page failed to load in Chrome", current=str(e)[:200])
         page.close()
+        return
 
-        def add(sev, cat, check, detail="", **kw):
-            audit.add(loc, sev, cat, check, detail, **kw)
+    page_host = urlparse(site.to_fetch(loc)).netloc
+    by_kind = Counter()
+    third = [r for r in m["resources"] if urlparse(r["url"]).netloc not in (page_host, site.site_host)]
+    for r in m["resources"]:
+        by_kind[kind(r)] += r["size"] or r["body"] or 0
+    total_bytes = sum(by_kind.values()) + (m["htmlTransfer"] or 0)
+    blocking = [r["url"] for r in m["resources"] if r["blocking"] == "blocking"]
 
-        if m["ttfb"] > 1800:
-            add(IMPORTANT, "Timing", "Slow TTFB", current=f"{m['ttfb']:.0f} ms", expected="<= 800 ms")
-        elif m["ttfb"] > 800:
-            add(OPTIMIZATION, "Timing", "TTFB above 800 ms", current=f"{m['ttfb']:.0f} ms", expected="<= 800 ms")
-        for metric, good, poor, label in (("fcp", 1800, 3000, "FCP"), ("lcp", 2500, 4000, "LCP"), ("tbt", 200, 600, "TBT")):
-            verdict = rate(m[metric], good, poor)
-            if verdict != "Good":
-                add(IMPORTANT if verdict == "Poor" else OPTIMIZATION, "Timing", f"{label} {verdict.lower()}",
-                    current=f"{m[metric]:.0f} ms", expected=f"<= {good} ms",
-                    element=m["lcpEl"] if metric == "lcp" else None, detail="desktop, unthrottled")
-        verdict = rate(m["cls"], 0.1, 0.25)
+    # response headers: compression / caching / CDN / protocol
+    doc_headers = {}
+    uncompressed, uncached = [], []
+    cdn = ""
+    for r in responses:
+        try:
+            h = {k.lower(): v for k, v in r.headers.items()}
+        except Exception:
+            continue
+        url = r.url
+        if r.request.resource_type == "document" and not doc_headers:
+            doc_headers = h
+        for header, name in CDN_HEADERS.items():
+            if header in h:
+                cdn = name
+        if "netlify" in h.get("server", "").lower():
+            cdn = cdn or "Netlify"
+        internal = urlparse(url).netloc in (page_host, site.site_host)
+        rtype = r.request.resource_type
+        if internal and rtype in ("document", "script", "stylesheet") and r.status == 200:
+            if h.get("content-encoding", "") not in ("br", "gzip", "zstd", "deflate"):
+                uncompressed.append(url.split("?")[0][-150:])
+        if internal and "/_next/static/" in url and r.status == 200:
+            cc = h.get("cache-control", "")
+            if "max-age=31536000" not in cc and "immutable" not in cc:
+                uncached.append((url.split("?")[0][-120:], cc))
+    page.close()
+
+    def add(sev, cat, check, detail="", **kw):
+        audit.add(loc, sev, cat, check, detail, **kw)
+
+    if m["ttfb"] > 1800:
+        add(IMPORTANT, "Timing", "Slow TTFB", current=f"{m['ttfb']:.0f} ms", expected="<= 800 ms")
+    elif m["ttfb"] > 800:
+        add(OPTIMIZATION, "Timing", "TTFB above 800 ms", current=f"{m['ttfb']:.0f} ms", expected="<= 800 ms")
+    for metric, good, poor, label in (("fcp", 1800, 3000, "FCP"), ("lcp", 2500, 4000, "LCP"), ("tbt", 200, 600, "TBT")):
+        verdict = rate(m[metric], good, poor)
         if verdict != "Good":
-            add(IMPORTANT if verdict == "Poor" else OPTIMIZATION, "Timing", f"CLS {verdict.lower()}",
-                current=f"{m['cls']:.3f}", expected="<= 0.1")
-        if m["inp"] is not None and m["inp"] > 200:
-            add(IMPORTANT if m["inp"] > 500 else OPTIMIZATION, "Timing", "Slow interaction (lab INP)",
-                current=f"{m['inp']:.0f} ms", expected="<= 200 ms")
-        for k in ("js", "css", "img", "font"):
-            if by_kind[k] > BUDGET[k]:
-                add(OPTIMIZATION if k != "js" else IMPORTANT, "Weight", f"{k.upper()} over budget",
-                    current=f"{by_kind[k] // 1024} KB", expected=f"<= {BUDGET[k] // 1024} KB")
-        if total_bytes > BUDGET["total"]:
-            add(IMPORTANT, "Weight", "Page weight over budget", current=f"{total_bytes // 1024} KB",
-                expected=f"<= {BUDGET['total'] // 1024} KB")
-        if len(m["resources"]) > BUDGET["requests"]:
-            add(OPTIMIZATION, "Weight", "Many requests", current=f"{len(m['resources'])} requests",
-                expected=f"<= {BUDGET['requests']}")
-        if len(third) > BUDGET["third_party"]:
-            add(OPTIMIZATION, "Third-party", "Many third-party requests", current=f"{len(third)} requests",
-                expected=f"<= {BUDGET['third_party']}")
-        if m["domNodes"] > BUDGET["dom"]:
-            add(OPTIMIZATION if m["domNodes"] < 3000 else IMPORTANT, "DOM", "Large DOM",
-                current=f"{m['domNodes']} nodes, depth {m['domDepth']}", expected=f"<= {BUDGET['dom']} nodes")
-        for b in blocking:
-            add(OPTIMIZATION, "Render-blocking", "Render-blocking resources", current="blocks first render",
-                element=b[:200])
-        if js_total and js_unused / js_total > 0.4:
-            add(OPTIMIZATION, "Coverage", "Unused JavaScript", current=f"{js_unused // 1024} KB of {js_total // 1024} KB "
-                f"({100 * js_unused // js_total}%) unused on load", expected="under 40% unused")
-        if css_total and css_unused / css_total > 0.5:
-            add(OPTIMIZATION, "Coverage", "Unused CSS", current=f"{css_unused // 1024} KB of {css_total // 1024} KB "
-                f"({100 * css_unused // css_total}%) unused", expected="under 50% unused")
-        for name in uncompressed:
-            add(IMPORTANT, "Delivery", "Responses not compressed (gzip/brotli)", current="no Content-Encoding",
-                expected="br or gzip", element=name)
-        for name, cc in uncached:
-            add(IMPORTANT, "Delivery", "Static assets without long-term caching", current=cc or "no Cache-Control",
-                expected="public, max-age=31536000, immutable", element=name)
-        if m["protocol"] in ("http/1.1", "http/1.0") and site.is_public:
-            add(IMPORTANT, "Delivery", "Served over HTTP/1.1 (no HTTP/2/3)", current=m["protocol"], expected="h2 or h3")
-        if site.is_public and not cdn:
-            add(OPTIMIZATION, "Delivery", "No CDN detected from response headers", current="no CDN header")
-        third_hosts = {urlparse(r["url"]).netloc for r in third}
-        preconnected = {urlparse(u).netloc for u in m["preconnect"] + m["dnsPrefetch"]}
-        missing_hints = sorted(h for h in third_hosts - preconnected
-                               if sum(1 for r in third if urlparse(r["url"]).netloc == h) >= 2)
-        for host in missing_hints:
-            add(OPTIMIZATION, "Hints", "Third-party origins without preconnect/dns-prefetch", current="no hint",
-                expected=f'<link rel="preconnect" href="https://{host}">', element=host)
-        for u, e in failed:
-            add(IMPORTANT, "Requests", "Failed requests", current=str(e)[:150], element=u[:200])
+            add(IMPORTANT if verdict == "Poor" else OPTIMIZATION, "Timing", f"{label} {verdict.lower()}",
+                current=f"{m[metric]:.0f} ms", expected=f"<= {good} ms",
+                element=m["lcpEl"] if metric == "lcp" else None, detail="desktop, unthrottled")
+    verdict = rate(m["cls"], 0.1, 0.25)
+    if verdict != "Good":
+        add(IMPORTANT if verdict == "Poor" else OPTIMIZATION, "Timing", f"CLS {verdict.lower()}",
+            current=f"{m['cls']:.3f}", expected="<= 0.1")
+    if m["inp"] is not None and m["inp"] > 200:
+        add(IMPORTANT if m["inp"] > 500 else OPTIMIZATION, "Timing", "Slow interaction (lab INP)",
+            current=f"{m['inp']:.0f} ms", expected="<= 200 ms")
+    for k in ("js", "css", "img", "font"):
+        if by_kind[k] > BUDGET[k]:
+            add(OPTIMIZATION if k != "js" else IMPORTANT, "Weight", f"{k.upper()} over budget",
+                current=f"{by_kind[k] // 1024} KB", expected=f"<= {BUDGET[k] // 1024} KB")
+    if total_bytes > BUDGET["total"]:
+        add(IMPORTANT, "Weight", "Page weight over budget", current=f"{total_bytes // 1024} KB",
+            expected=f"<= {BUDGET['total'] // 1024} KB")
+    if len(m["resources"]) > BUDGET["requests"]:
+        add(OPTIMIZATION, "Weight", "Many requests", current=f"{len(m['resources'])} requests",
+            expected=f"<= {BUDGET['requests']}")
+    if len(third) > BUDGET["third_party"]:
+        add(OPTIMIZATION, "Third-party", "Many third-party requests", current=f"{len(third)} requests",
+            expected=f"<= {BUDGET['third_party']}")
+    if m["domNodes"] > BUDGET["dom"]:
+        add(OPTIMIZATION if m["domNodes"] < 3000 else IMPORTANT, "DOM", "Large DOM",
+            current=f"{m['domNodes']} nodes, depth {m['domDepth']}", expected=f"<= {BUDGET['dom']} nodes")
+    for b in blocking:
+        add(OPTIMIZATION, "Render-blocking", "Render-blocking resources", current="blocks first render",
+            element=b[:200])
+    if js_total and js_unused / js_total > 0.4:
+        add(OPTIMIZATION, "Coverage", "Unused JavaScript", current=f"{js_unused // 1024} KB of {js_total // 1024} KB "
+            f"({100 * js_unused // js_total}%) unused on load", expected="under 40% unused")
+    if css_total and css_unused / css_total > 0.5:
+        add(OPTIMIZATION, "Coverage", "Unused CSS", current=f"{css_unused // 1024} KB of {css_total // 1024} KB "
+            f"({100 * css_unused // css_total}%) unused", expected="under 50% unused")
+    for name in uncompressed:
+        add(IMPORTANT, "Delivery", "Responses not compressed (gzip/brotli)", current="no Content-Encoding",
+            expected="br or gzip", element=name)
+    for name, cc in uncached:
+        add(IMPORTANT, "Delivery", "Static assets without long-term caching", current=cc or "no Cache-Control",
+            expected="public, max-age=31536000, immutable", element=name)
+    if m["protocol"] in ("http/1.1", "http/1.0") and site.is_public:
+        add(IMPORTANT, "Delivery", "Served over HTTP/1.1 (no HTTP/2/3)", current=m["protocol"], expected="h2 or h3")
+    if site.is_public and not cdn:
+        add(OPTIMIZATION, "Delivery", "No CDN detected from response headers", current="no CDN header")
+    third_hosts = {urlparse(r["url"]).netloc for r in third}
+    preconnected = {urlparse(u).netloc for u in m["preconnect"] + m["dnsPrefetch"]}
+    missing_hints = sorted(h for h in third_hosts - preconnected
+                           if sum(1 for r in third if urlparse(r["url"]).netloc == h) >= 2)
+    for host in missing_hints:
+        add(OPTIMIZATION, "Hints", "Third-party origins without preconnect/dns-prefetch", current="no hint",
+            expected=f'<link rel="preconnect" href="https://{host}">', element=host)
+    for u, e in failed:
+        add(IMPORTANT, "Requests", "Failed requests", current=str(e)[:150], element=u[:200])
 
-        lh = lighthouse(site.to_fetch(loc)) if args.lighthouse else None
-        if lh and lh["speed_index"] > 3400:
-            add(IMPORTANT if lh["speed_index"] > 5800 else OPTIMIZATION, "Timing", "Speed Index slow (Lighthouse)",
-                current=f"{lh['speed_index']:.0f} ms", expected="<= 3400 ms")
-        rows.append((loc, round(m["dns"]), round(m["connect"]), round(m["ttfb"]), round(m["domContentLoaded"]), round(m["load"]),
-                     round(m["fcp"]), round(m["lcp"]), m["lcpEl"], round(m["cls"], 3), round(m["tbt"]),
-                     round(m["inp"]) if m["inp"] is not None else "", round(lh["speed_index"]) if lh else "",
-                     lh["score"] if lh else "", m["domNodes"], m["domDepth"], (m["htmlSize"] or 0) // 1024,
-                     by_kind["js"] // 1024, by_kind["css"] // 1024, by_kind["img"] // 1024, by_kind["font"] // 1024,
-                     total_bytes // 1024, len(m["resources"]), len(third), len(blocking), js_unused // 1024,
-                     css_unused // 1024, m["protocol"], doc_headers.get("content-encoding", ""), cdn,
-                     len(m["preconnect"]), len(m["dnsPrefetch"]), m["preload"]))
-        for r in sorted(m["resources"], key=lambda r: -(r["size"] or 0))[:15]:
-            resource_rows.append((loc, kind(r), r["url"][:200], (r["size"] or 0) // 1024, r["duration"], r["protocol"],
-                                  r["blocking"]))
-        print(f"  {n}/{len(pages)} {loc}  LCP {m['lcp']:.0f}ms  CLS {m['cls']:.3f}  TBT {m['tbt']:.0f}ms")
+    lh = lighthouse(site.to_fetch(loc)) if args.lighthouse else None
+    if lh and lh["speed_index"] > 3400:
+        add(IMPORTANT if lh["speed_index"] > 5800 else OPTIMIZATION, "Timing", "Speed Index slow (Lighthouse)",
+            current=f"{lh['speed_index']:.0f} ms", expected="<= 3400 ms")
+    rows.append((loc, round(m["dns"]), round(m["connect"]), round(m["ttfb"]), round(m["domContentLoaded"]), round(m["load"]),
+                 round(m["fcp"]), round(m["lcp"]), m["lcpEl"], round(m["cls"], 3), round(m["tbt"]),
+                 round(m["inp"]) if m["inp"] is not None else "", round(lh["speed_index"]) if lh else "",
+                 lh["score"] if lh else "", m["domNodes"], m["domDepth"], (m["htmlSize"] or 0) // 1024,
+                 by_kind["js"] // 1024, by_kind["css"] // 1024, by_kind["img"] // 1024, by_kind["font"] // 1024,
+                 total_bytes // 1024, len(m["resources"]), len(third), len(blocking), js_unused // 1024,
+                 css_unused // 1024, m["protocol"], doc_headers.get("content-encoding", ""), cdn,
+                 len(m["preconnect"]), len(m["dnsPrefetch"]), m["preload"]))
+    for r in sorted(m["resources"], key=lambda r: -(r["size"] or 0))[:15]:
+        resource_rows.append((loc, kind(r), r["url"][:200], (r["size"] or 0) // 1024, r["duration"], r["protocol"],
+                              r["blocking"]))
+    print(f"  {loc}  LCP {m['lcp']:.0f}ms  CLS {m['cls']:.3f}  TBT {m['tbt']:.0f}ms")
+
+
+def measure(browser, loc):
+    ctx = browser.context(width=1440, height=900)   # a new context per page = cold cache, like a first visit
+    ctx.add_init_script(PERF_INIT_SCRIPT)
+    try:
+        _measure(ctx, loc)
+    finally:
+        ctx.close()
+
+
+print(f"Measuring {len(pages)} pages in Chrome ({args.browser_workers} in parallel) ...")
+run_browser_pages(measure, pages, args.browser_workers, "pages measured")
+rows.sort(key=lambda r: r[0])   # parallel workers finish in any order
+resource_rows.sort(key=lambda r: r[0])
 
 audit.sheet("Metrics", ["URL", "DNS ms", "Connect ms", "TTFB ms", "DOMContentLoaded ms", "Load ms", "FCP ms", "LCP ms",
                         "LCP element", "CLS", "TBT ms", "INP ms (lab)", "Speed Index (LH)", "Lighthouse score", "DOM nodes",

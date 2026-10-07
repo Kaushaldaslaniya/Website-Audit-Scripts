@@ -3,15 +3,17 @@ Run every audit script one after another and build the Website Health master rep
 
   python "py files/run_all.py"                                   # audits NEXT_PUBLIC_REPORT_URL from .env.local
   python "py files/run_all.py" --base http://127.0.0.1:4000      # another server
-  python "py files/run_all.py" --pages all                       # browser checks on every page (slow)
+  python "py files/run_all.py" --pages sample                    # quick run: main pages + 2 per section
   python "py files/run_all.py" --only 02,05,12a                  # just some scripts (21 always runs last)
-  python "py files/run_all.py" --skip 12,12a --no-browser        # skip scripts / all Chrome-based checks
+  python "py files/run_all.py" --skip 12b --browser-workers 2     # skip Lighthouse / fewer parallel Chromes
+  python "py files/run_all.py" --no-browser                      # no Chrome at all (fast, HTML checks only)
   python "py files/run_all.py" --sitemap-only                    # old behaviour: sitemap URLs only, no crawling
   npm run seo:audit                                              # same as the first line
 
 The server comes from --base, else $SITE_BASE_URL, else NEXT_PUBLIC_REPORT_URL (environment, .env.local, .env),
 else http://localhost:3000. The whole site is crawled once (every internal URL that can be discovered, not only
-sitemap.xml) and every script audits those pages.
+sitemap.xml - links that only appear after opening menus / tabs are found in Chrome) and every script audits every
+one of those pages, including the Chrome-based ones (--pages sample for a quick run).
 
 All reports of one run share a date folder and a time stamp, one folder per format (nothing else is written):
   py files/report/<YYYY-MM-DD>/excel/<Report_Name>_<HH-MM-SS>.xlsx
@@ -33,7 +35,8 @@ MASTER = "21_website_health_report.py"
 NUMBERED = sorted(p.name for p in HERE.glob("[0-9][0-9]*_*.py") if p.name != MASTER)  # 01 ... 20 (incl. 12a)
 BROWSER_SCRIPTS = {"10_accessibility_checker.py": ["--no-browser"], "13_nextjs_checker.py": ["--no-browser"],
                    "16_third_party_checker.py": ["--no-browser"],
-                   "12_performance_checker.py": None, "12a_core_web_vitals_checker.py": None, "15_mobile_checker.py": None}
+                   "12_performance_checker.py": None, "12a_core_web_vitals_checker.py": None,
+                   "12b_lighthouse_checker.py": None, "15_mobile_checker.py": None}
 
 
 def main():
@@ -52,6 +55,10 @@ def main():
     ap.add_argument("--skip", default="", help="comma list of script prefixes to skip")
     ap.add_argument("--no-browser", action="store_true", help="skip Chrome-based checks (no Playwright needed)")
     ap.add_argument("--workers", type=int, default=8)
+    ap.add_argument("--browser-workers", type=int, default=seo_common.default_browser_workers(),
+                    help="Chrome / Lighthouse runs in parallel in the browser scripts (default %(default)s)")
+    ap.add_argument("--no-js-discovery", action="store_true",
+                    help="don't open menus / tabs in Chrome during the crawl to find JavaScript-only links")
     ap.add_argument("--max-pages", type=int, default=5000, help="crawl at most this many URLs")
     ap.add_argument("--sitemap-only", action="store_true", help="audit only sitemap.xml URLs (no crawling)")
     ap.add_argument("--ignore-robots", action="store_true", help="also crawl URLs that robots.txt disallows")
@@ -72,6 +79,7 @@ def main():
     now = datetime.now()
     env = dict(os.environ, SEO_RUN_DATE=now.strftime("%Y-%m-%d"), SEO_RUN_TIME=now.strftime("%H-%M-%S"),
                SITE_BASE_URL=args.base, SEO_WORKERS=str(args.workers), SEO_MAX_PAGES=str(args.max_pages),
+               SEO_BROWSER_WORKERS=str(args.browser_workers),
                PYTHONUNBUFFERED="1")
     if args.pages:
         env["SEO_PAGES"] = args.pages
@@ -79,6 +87,8 @@ def main():
         env["SEO_SITEMAP_ONLY"] = "1"
     if args.ignore_robots:
         env["SEO_IGNORE_ROBOTS"] = "1"
+    if args.no_js_discovery or args.no_browser:
+        env["SEO_NO_JS_DISCOVERY"] = "1"
     report_dir = seo_common.ensure_report_root() / env["SEO_RUN_DATE"]   # py files/report, created if missing
 
     def prefix(name):

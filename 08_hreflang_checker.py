@@ -25,8 +25,7 @@ ISO_LANG = set("aa ab af ak am an ar as av ay az ba be bg bh bi bm bn bo br bs c
                "sk sl sm sn so sq sr ss st su sv sw ta te tg th ti tk tl tn to tr ts tt tw ty ug uk ur uz ve vi vo wa wo "
                "xh yi yo za zh zu".split())
 
-args = parse_args("hreflang checker", lambda ap: ap.add_argument("--languages", default="en,it,de,fr,es"),
-                  default_pages="sample")
+args = parse_args("hreflang checker", lambda ap: ap.add_argument("--languages", default="en,it,de,fr,es"))
 LANGS = [l.strip() for l in args.languages.split(",") if l.strip()]
 DEFAULT_LANG = LANGS[0]
 site, urls = load_site(args)

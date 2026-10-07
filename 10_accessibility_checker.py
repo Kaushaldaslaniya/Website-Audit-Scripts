@@ -4,7 +4,7 @@
       hierarchy, landmarks (main / header / nav / footer), <html lang>, duplicate IDs, broken aria-labelledby /
       aria-describedby references, invalid ARIA attributes and roles, aria-hidden on focusable elements,
       positive tabindex, skip-navigation link, iframe title, video captions, form error announcements
-  browser (sample pages, real Chrome): axe-core rules incl. colour contrast + ARIA, keyboard navigation
+  browser (every page, real Chrome, --browser-workers in parallel): axe-core rules incl. colour contrast + ARIA, keyboard navigation
       (Tab order reaches the page), focus visibility, clickable elements not reachable by keyboard,
       touch target size on a phone viewport
 
@@ -14,7 +14,7 @@
 import re
 from collections import Counter
 
-from seo_common import (CRITICAL, IMPORTANT, OPTIMIZATION, Audit, Browser, describe, load_site, parse_args,
+from seo_common import (CRITICAL, IMPORTANT, OPTIMIZATION, Audit, describe, load_site, parse_args, run_browser_pages,
                         run_parallel, sample_pages, select_pages, text_of)
 
 ARIA_ATTRS = set("""activedescendant atomic autocomplete braillelabel brailleroledescription busy checked colcount colindex
@@ -34,7 +34,8 @@ AXE_IMPACT = {"critical": CRITICAL, "serious": IMPORTANT, "moderate": OPTIMIZATI
 
 args = parse_args("Accessibility checker", lambda ap: (
     ap.add_argument("--no-browser", action="store_true", help="static checks only"),
-    ap.add_argument("--browser-pages", choices=("sample", "all"), default="sample")))
+    ap.add_argument("--browser-pages", choices=("sample", "all"), default=None,
+                    help="pages for the Chrome checks (default: same as --pages)")))
 site, urls = load_site(args)
 pages = select_pages(urls, args)
 audit = Audit("10_accessibility", "Accessibility Report", "Accessibility", site)
@@ -152,110 +153,115 @@ run_parallel(static, pages, args.workers)
 
 # ------------------------------------------------------------------ browser checks
 browser_rows = []
-if not args.no_browser:
+try:
+    from axe_playwright_python.sync_playwright import Axe
+    axe = Axe()
+except Exception:
+    axe = None
+
+
+def browser_check(browser, loc):
+    desktop = browser.context(width=1440, height=900)
+    page = desktop.new_page()
     try:
-        from axe_playwright_python.sync_playwright import Axe
-        axe = Axe()
-    except Exception:
-        axe = None
-    targets = pages if args.browser_pages == "all" else sample_pages(pages)
-    print(f"Browser checks on {len(targets)} pages (axe-core: {'package' if axe else 'CDN'}) ...")
-    with Browser() as browser:
-        desktop = browser.context(width=1440, height=900)
-        phone = browser.context(mobile=True, width=390, height=844)
-        for n, loc in enumerate(targets, 1):
-            page = desktop.new_page()
-            try:
-                page.goto(site.to_fetch(loc), wait_until="networkidle", timeout=60000)
-                # axe-core
-                violations = []
-                try:
-                    if axe:
-                        violations = axe.run(page).response.get("violations", [])
-                    else:
-                        page.add_script_tag(url=AXE_CDN)
-                        violations = page.evaluate("async () => (await axe.run(document)).violations")
-                except Exception as e:
-                    audit.add(loc, OPTIMIZATION, "Browser", "axe-core could not run", current=str(e)[:150])
-                for v in violations:
-                    sev = AXE_IMPACT.get(v.get("impact"), OPTIMIZATION)
-                    for node in v.get("nodes", []):
-                        target = " ".join(map(str, node["target"])) if isinstance(node.get("target"), list) else str(node.get("target"))
-                        summary = (node.get("failureSummary") or "").replace("Fix any of the following:", "").replace(
-                            "Fix all of the following:", "").strip()
-                        audit.add(loc, sev, "axe-core", f"{v['id']}: {v['help']}", current=summary[:300] or v.get("impact", ""),
-                                  element=target[:200], description=v.get("description", ""),
-                                  fix=f"{summary[:200]} - see {v.get('helpUrl', '')}".strip(" -"),
-                                  expected="no axe-core violation", detail=f"impact {v.get('impact')}; html: {node.get('html', '')[:150]}")
-                    browser_rows.append((loc, "axe", v["id"], v.get("impact"), len(v.get("nodes", [])), v["help"], v.get("helpUrl", "")))
+        page.goto(site.to_fetch(loc), wait_until="networkidle", timeout=60000)
+        # axe-core
+        violations = []
+        try:
+            if axe:
+                violations = axe.run(page).response.get("violations", [])
+            else:
+                page.add_script_tag(url=AXE_CDN)
+                violations = page.evaluate("async () => (await axe.run(document)).violations")
+        except Exception as e:
+            audit.add(loc, OPTIMIZATION, "Browser", "axe-core could not run", current=str(e)[:150])
+        for v in violations:
+            sev = AXE_IMPACT.get(v.get("impact"), OPTIMIZATION)
+            for node in v.get("nodes", []):
+                target = " ".join(map(str, node["target"])) if isinstance(node.get("target"), list) else str(node.get("target"))
+                summary = (node.get("failureSummary") or "").replace("Fix any of the following:", "").replace(
+                    "Fix all of the following:", "").strip()
+                audit.add(loc, sev, "axe-core", f"{v['id']}: {v['help']}", current=summary[:300] or v.get("impact", ""),
+                          element=target[:200], description=v.get("description", ""),
+                          fix=f"{summary[:200]} - see {v.get('helpUrl', '')}".strip(" -"),
+                          expected="no axe-core violation", detail=f"impact {v.get('impact')}; html: {node.get('html', '')[:150]}")
+            browser_rows.append((loc, "axe", v["id"], v.get("impact"), len(v.get("nodes", [])), v["help"], v.get("helpUrl", "")))
 
-                # keyboard + focus visibility
-                focus = page.evaluate(f"""async () => {{
-                    const focusable = [...document.querySelectorAll('{FOCUSABLE}')].filter(e => !e.disabled &&
-                        e.getAttribute('tabindex') !== '-1' && e.offsetParent !== null);
-                    return {{ total: focusable.length }};
-                }}""")
-                no_indicator, reached = [], set()
-                for _ in range(min(25, focus["total"])):
-                    page.keyboard.press("Tab")
-                    info = page.evaluate("""() => {
-                        const e = document.activeElement; if (!e || e === document.body) return null;
-                        const s = getComputedStyle(e);
-                        const visible = (s.outlineStyle !== 'none' && parseFloat(s.outlineWidth) > 0) || s.boxShadow !== 'none'
-                            || s.textDecorationLine.includes('underline') && !e.matches(':hover');
-                        return {tag: e.tagName.toLowerCase(), text: (e.innerText || e.getAttribute('aria-label') || '').trim().slice(0, 40),
-                                visible, key: e.tagName + (e.id || '') + (e.getAttribute('href') || '') + (e.className || '')};
-                    }""")
-                    if not info:
-                        continue
-                    reached.add(info["key"])
-                    if not info["visible"]:
-                        no_indicator.append(f"<{info['tag']}> {info['text']}")
-                if focus["total"] and not reached:
-                    audit.add(loc, CRITICAL, "Keyboard", "Tab key doesn't reach any element",
-                              current=f"0 of {focus['total']} focusable elements reached")
-                for el in dict.fromkeys(no_indicator):
-                    audit.add(loc, IMPORTANT, "Keyboard", "Focused elements without a visible focus indicator",
-                              current="no outline / box-shadow on :focus", element=el)
-                clickable = page.evaluate("""() => [...document.querySelectorAll('div, span, li, img, svg')].filter(e => {
-                        const s = getComputedStyle(e);
-                        return s.cursor === 'pointer' && !e.closest('a, button, label, summary, [role=button], [tabindex], input, select')
-                            && e.offsetParent !== null && e.getBoundingClientRect().width > 0;
-                    }).slice(0, 8).map(e => e.tagName.toLowerCase() + '.' + String(e.className).split(' ').slice(0, 2).join('.'))""")
-                for el in clickable:
-                    audit.add(loc, IMPORTANT, "Keyboard", "Clickable elements not reachable by keyboard",
-                              current="cursor:pointer on a non-focusable element", element=el)
-                browser_rows.append((loc, "keyboard", "tab-stops", "", len(reached), f"{len(no_indicator)} without focus indicator", ""))
-            except Exception as e:
-                audit.add(loc, OPTIMIZATION, "Browser", "Page failed to load in browser", current=str(e)[:200])
-            finally:
-                page.close()
+        # keyboard + focus visibility
+        focus = page.evaluate(f"""async () => {{
+            const focusable = [...document.querySelectorAll('{FOCUSABLE}')].filter(e => !e.disabled &&
+                e.getAttribute('tabindex') !== '-1' && e.offsetParent !== null);
+            return {{ total: focusable.length }};
+        }}""")
+        no_indicator, reached = [], set()
+        for _ in range(min(25, focus["total"])):
+            page.keyboard.press("Tab")
+            info = page.evaluate("""() => {
+                const e = document.activeElement; if (!e || e === document.body) return null;
+                const s = getComputedStyle(e);
+                const visible = (s.outlineStyle !== 'none' && parseFloat(s.outlineWidth) > 0) || s.boxShadow !== 'none'
+                    || s.textDecorationLine.includes('underline') && !e.matches(':hover');
+                return {tag: e.tagName.toLowerCase(), text: (e.innerText || e.getAttribute('aria-label') || '').trim().slice(0, 40),
+                        visible, key: e.tagName + (e.id || '') + (e.getAttribute('href') || '') + (e.className || '')};
+            }""")
+            if not info:
+                continue
+            reached.add(info["key"])
+            if not info["visible"]:
+                no_indicator.append(f"<{info['tag']}> {info['text']}")
+        if focus["total"] and not reached:
+            audit.add(loc, CRITICAL, "Keyboard", "Tab key doesn't reach any element",
+                      current=f"0 of {focus['total']} focusable elements reached")
+        for el in dict.fromkeys(no_indicator):
+            audit.add(loc, IMPORTANT, "Keyboard", "Focused elements without a visible focus indicator",
+                      current="no outline / box-shadow on :focus", element=el)
+        clickable = page.evaluate("""() => [...document.querySelectorAll('div, span, li, img, svg')].filter(e => {
+                const s = getComputedStyle(e);
+                return s.cursor === 'pointer' && !e.closest('a, button, label, summary, [role=button], [tabindex], input, select')
+                    && e.offsetParent !== null && e.getBoundingClientRect().width > 0;
+            }).slice(0, 8).map(e => e.tagName.toLowerCase() + '.' + String(e.className).split(' ').slice(0, 2).join('.'))""")
+        for el in clickable:
+            audit.add(loc, IMPORTANT, "Keyboard", "Clickable elements not reachable by keyboard",
+                      current="cursor:pointer on a non-focusable element", element=el)
+        browser_rows.append((loc, "keyboard", "tab-stops", "", len(reached), f"{len(no_indicator)} without focus indicator", ""))
+    except Exception as e:
+        audit.add(loc, OPTIMIZATION, "Browser", "Page failed to load in browser", current=str(e)[:200])
+    finally:
+        desktop.close()
 
-            # touch targets on a phone
-            mpage = phone.new_page()
-            try:
-                mpage.goto(site.to_fetch(loc), wait_until="networkidle", timeout=60000)
-                small = mpage.evaluate(f"""() => [...document.querySelectorAll('{FOCUSABLE}')].filter(e => e.offsetParent !== null)
-                    .map(e => {{ const r = e.getBoundingClientRect(); return {{w: r.width, h: r.height,
-                        label: (e.innerText || e.getAttribute('aria-label') || e.tagName).trim().slice(0, 30),
-                        inline: getComputedStyle(e).display === 'inline' && e.closest('p, li') !== null}}; }})
-                    .filter(t => t.w > 0 && t.h > 0 && !t.inline && (t.w < 44 || t.h < 44))""")
-                tiny = [t for t in small if t["w"] < 24 or t["h"] < 24]
-                for t in tiny:
-                    audit.add(loc, IMPORTANT, "Touch targets", "Touch targets smaller than 24x24 px",
-                              current=f"{int(t['w'])}x{int(t['h'])} px", expected="24x24 px minimum (44x44 recommended)",
-                              element=t["label"], detail="390 px phone viewport")
-                for t in small:
-                    if t not in tiny:
-                        audit.add(loc, OPTIMIZATION, "Touch targets", "Touch targets smaller than 44x44 px",
-                                  current=f"{int(t['w'])}x{int(t['h'])} px", expected="44x44 px", element=t["label"],
-                                  detail="390 px phone viewport")
-                browser_rows.append((loc, "touch", "small-targets", "", len(small), f"{len(tiny)} under 24px", ""))
-            except Exception as e:
-                audit.add(loc, OPTIMIZATION, "Browser", "Page failed to load on phone viewport", current=str(e)[:200])
-            finally:
-                mpage.close()
-            print(f"  {n}/{len(targets)} browser pages")
+    # touch targets on a phone
+    phone = browser.context(mobile=True, width=390, height=844)
+    mpage = phone.new_page()
+    try:
+        mpage.goto(site.to_fetch(loc), wait_until="networkidle", timeout=60000)
+        small = mpage.evaluate(f"""() => [...document.querySelectorAll('{FOCUSABLE}')].filter(e => e.offsetParent !== null)
+            .map(e => {{ const r = e.getBoundingClientRect(); return {{w: r.width, h: r.height,
+                label: (e.innerText || e.getAttribute('aria-label') || e.tagName).trim().slice(0, 30),
+                inline: getComputedStyle(e).display === 'inline' && e.closest('p, li') !== null}}; }})
+            .filter(t => t.w > 0 && t.h > 0 && !t.inline && (t.w < 44 || t.h < 44))""")
+        tiny = [t for t in small if t["w"] < 24 or t["h"] < 24]
+        for t in tiny:
+            audit.add(loc, IMPORTANT, "Touch targets", "Touch targets smaller than 24x24 px",
+                      current=f"{int(t['w'])}x{int(t['h'])} px", expected="24x24 px minimum (44x44 recommended)",
+                      element=t["label"], detail="390 px phone viewport")
+        for t in small:
+            if t not in tiny:
+                audit.add(loc, OPTIMIZATION, "Touch targets", "Touch targets smaller than 44x44 px",
+                          current=f"{int(t['w'])}x{int(t['h'])} px", expected="44x44 px", element=t["label"],
+                          detail="390 px phone viewport")
+        browser_rows.append((loc, "touch", "small-targets", "", len(small), f"{len(tiny)} under 24px", ""))
+    except Exception as e:
+        audit.add(loc, OPTIMIZATION, "Browser", "Page failed to load on phone viewport", current=str(e)[:200])
+    finally:
+        phone.close()
+
+
+if not args.no_browser:
+    targets = pages if (args.browser_pages or args.pages) == "all" else sample_pages(pages)
+    print(f"Browser checks on {len(targets)} pages (axe-core: {'package' if axe else 'CDN'}, "
+          f"{args.browser_workers} in parallel) ...")
+    run_browser_pages(browser_check, targets, args.browser_workers, "browser pages")
+    browser_rows.sort(key=lambda r: (r[0], r[1]))   # parallel workers finish in any order
 
 audit.sheet("Browser results", ["Page", "Check", "Rule", "Impact", "Elements", "Description", "Help"], browser_rows,
             (50, 10, 28, 10, 9, 60, 50))

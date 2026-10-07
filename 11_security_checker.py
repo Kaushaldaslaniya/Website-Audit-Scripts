@@ -29,7 +29,7 @@ SECURITY_HEADERS = [  # (header, severity, recommended value)
 SENSITIVE = ["/.env", "/.env.local", "/.git/HEAD", "/.git/config", "/package.json", "/.DS_Store", "/next.config.js",
              "/.next/BUILD_ID", "/server.js", "/phpinfo.php", "/wp-admin/", "/backup.zip"]
 
-args = parse_args("Security checker", default_pages="sample")
+args = parse_args("Security checker")
 site, urls = load_site(args)
 pages = select_pages(urls, args)
 audit = Audit("11_security", "Security Report", "Security", site)
