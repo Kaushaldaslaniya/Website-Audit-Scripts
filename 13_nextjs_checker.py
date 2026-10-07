@@ -7,7 +7,7 @@
       staging URLs, leftover console.log / debugger
   rendered HTML (every page): default/duplicate metadata on dynamic pages, duplicate meta tags, canonical + Open Graph
       absolute (metadataBase works), Twitter tags, next/image usage, localhost / development URLs, debug text
-  browser (sample pages): console errors, hydration errors, failed requests, missing /_next assets, failed API calls,
+  browser (every page, --browser-workers in parallel): console errors, hydration errors, failed requests, missing /_next assets, failed API calls,
       content that only appears after JavaScript (client-only rendering)
   favicon / browser metadata: favicon, apple-touch-icon, web manifest (name, icons 192/512, start_url, display),
       theme-color, site name
@@ -20,8 +20,8 @@ from collections import Counter
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
 
-from seo_common import (CRITICAL, IMPORTANT, OPTIMIZATION, PROJECT_ROOT, Audit, Browser, fetch, has_rel, load_site,
-                        main_text, meta, parse_args, run_parallel, sample_pages, select_pages, text_of)
+from seo_common import (CRITICAL, IMPORTANT, OPTIMIZATION, PROJECT_ROOT, Audit, fetch, has_rel, load_site, main_text,
+                        meta, parse_args, run_browser_pages, run_parallel, select_pages, text_of)
 
 DEV_URL = re.compile(r"https?://(localhost|127\.0\.0\.1|0\.0\.0\.0|192\.168\.\d+\.\d+|[\w-]+\.local|[\w.-]*ngrok[\w.-]*|"
                      r"staging\.[\w.-]+|dev\.[\w.-]+|[\w-]+\.vercel\.app|[\w-]+--[\w-]+\.netlify\.app)(:\d+)?", re.I)
@@ -260,51 +260,63 @@ if home:
 
 # ================================================================ browser
 browser_rows = []
+
+
+def browser_check(browser, loc):
+    ctx = browser.context(width=1440, height=900)
+    try:
+        _browser_check(ctx, loc)
+    finally:
+        ctx.close()
+
+
+def _browser_check(ctx, loc):
+    page = ctx.new_page()
+    console, errors, failed, bad_api = [], [], [], []
+    page.on("console", lambda m: console.append((m.type, m.text)) if m.type in ("error", "warning") else None)
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    page.on("requestfailed", lambda r: failed.append((r.url, r.failure)))
+    page.on("response", lambda r: (bad_api if r.request.resource_type in ("fetch", "xhr") else failed).append(
+        (r.url, r.status)) if r.status >= 400 else None)
+    try:
+        page.goto(site.to_fetch(loc), wait_until="networkidle", timeout=60000)
+        page.wait_for_timeout(1000)
+        rendered = page.evaluate("() => (document.querySelector('main') || document.body).innerText")
+    except Exception as e:
+        audit.add(loc, IMPORTANT, "Browser", "Page failed to load in Chrome", current=str(e)[:200])
+        page.close()
+        return
+    page.close()
+    hydration = [t for k, t in console if re.search(r"hydrat|did not match|server rendered HTML", t, re.I)]
+    errs = [t for k, t in console if k == "error" and t not in hydration]
+    for t in dict.fromkeys(hydration):
+        audit.add(loc, IMPORTANT, "Hydration", "Hydration error/warning", current=t[:300])
+    for t in dict.fromkeys(errors):
+        audit.add(loc, CRITICAL, "Runtime", "Uncaught JavaScript error", current=t[:300])
+    for t in dict.fromkeys(errs):
+        audit.add(loc, IMPORTANT, "Runtime", "Console errors", current=t[:300])
+    for u, st in failed:
+        if "/_next/" in u:
+            audit.add(loc, CRITICAL, "Production health", "Missing /_next asset", current=str(st), element=u[:200])
+        else:
+            audit.add(loc, IMPORTANT, "Requests", "Failed requests", current=str(st), element=u[:200])
+    for u, st in bad_api:
+        audit.add(loc, IMPORTANT, "Requests", "Failed API calls", current=f"HTTP {st}", element=u[:200])
+    res, soup = site.page(loc)
+    ssr_words = len(main_text(soup).split()) if soup else 0
+    csr_words = len((rendered or "").split())
+    if csr_words > 150 and csr_words > 2 * max(ssr_words, 1):
+        audit.add(loc, IMPORTANT, "Rendering", "Most content is rendered client-side only",
+                  current=f"{ssr_words} words in server HTML, {csr_words} after JavaScript",
+                  expected="most words already in the server HTML")
+    browser_rows.append((loc, len(errs), len(hydration), len(errors), len(failed), len(bad_api), ssr_words, csr_words))
+
+
 if not args.no_browser:
-    targets = sample_pages(pages)
-    print(f"Loading {len(targets)} pages in Chrome (console, hydration, failed requests) ...")
-    with Browser() as browser:
-        ctx = browser.context(width=1440, height=900)
-        for loc in targets:
-            page = ctx.new_page()
-            console, errors, failed, bad_api = [], [], [], []
-            page.on("console", lambda m: console.append((m.type, m.text)) if m.type in ("error", "warning") else None)
-            page.on("pageerror", lambda e: errors.append(str(e)))
-            page.on("requestfailed", lambda r: failed.append((r.url, r.failure)))
-            page.on("response", lambda r: (bad_api if r.request.resource_type in ("fetch", "xhr") else failed).append(
-                (r.url, r.status)) if r.status >= 400 else None)
-            try:
-                page.goto(site.to_fetch(loc), wait_until="networkidle", timeout=60000)
-                page.wait_for_timeout(1000)
-                rendered = page.evaluate("() => (document.querySelector('main') || document.body).innerText")
-            except Exception as e:
-                audit.add(loc, IMPORTANT, "Browser", "Page failed to load in Chrome", current=str(e)[:200])
-                page.close()
-                continue
-            page.close()
-            hydration = [t for k, t in console if re.search(r"hydrat|did not match|server rendered HTML", t, re.I)]
-            errs = [t for k, t in console if k == "error" and t not in hydration]
-            for t in dict.fromkeys(hydration):
-                audit.add(loc, IMPORTANT, "Hydration", "Hydration error/warning", current=t[:300])
-            for t in dict.fromkeys(errors):
-                audit.add(loc, CRITICAL, "Runtime", "Uncaught JavaScript error", current=t[:300])
-            for t in dict.fromkeys(errs):
-                audit.add(loc, IMPORTANT, "Runtime", "Console errors", current=t[:300])
-            for u, st in failed:
-                if "/_next/" in u:
-                    audit.add(loc, CRITICAL, "Production health", "Missing /_next asset", current=str(st), element=u[:200])
-                else:
-                    audit.add(loc, IMPORTANT, "Requests", "Failed requests", current=str(st), element=u[:200])
-            for u, st in bad_api:
-                audit.add(loc, IMPORTANT, "Requests", "Failed API calls", current=f"HTTP {st}", element=u[:200])
-            res, soup = site.page(loc)
-            ssr_words = len(main_text(soup).split()) if soup else 0
-            csr_words = len((rendered or "").split())
-            if csr_words > 150 and csr_words > 2 * max(ssr_words, 1):
-                audit.add(loc, IMPORTANT, "Rendering", "Most content is rendered client-side only",
-                          current=f"{ssr_words} words in server HTML, {csr_words} after JavaScript",
-                          expected="most words already in the server HTML")
-            browser_rows.append((loc, len(errs), len(hydration), len(errors), len(failed), len(bad_api), ssr_words, csr_words))
+    print(f"Loading {len(pages)} pages in Chrome (console, hydration, failed requests; "
+          f"{args.browser_workers} in parallel) ...")
+    run_browser_pages(browser_check, pages, args.browser_workers, "pages loaded")
+    browser_rows.sort(key=lambda r: r[0])
 
 audit.sheet("Routes", ["Route", "File", "Dynamic", "Own metadata", "generateMetadata", "generateStaticParams", "Component",
                        "Issues"], route_rows, (40, 55, 8, 12, 15, 18, 10, 45))

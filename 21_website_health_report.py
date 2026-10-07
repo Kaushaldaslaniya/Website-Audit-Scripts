@@ -2,7 +2,7 @@
 21 - Website Health master report (always runs last)
   Combines the JSON reports of scripts 01-20 into one report (Excel, JSON and CSV):
     - Website Health: Technical SEO, On-Page SEO, Performance, Accessibility, Security, Image, Link Health,
-      Structured Data, Mobile, Content -> Overall Website Health Score
+      Structured Data, Mobile, Content, Lighthouse -> Overall Website Health Score
     - All Issues by URL: every issue from every report, one row per issue, URL by URL. When several reports
       found the identical problem on the same URL it is listed once with every report in "Reported by".
     - URL Summary: per URL, how many critical / important / optimization issues and which reports found them
@@ -38,6 +38,7 @@ CATEGORIES = [  # (name, weight %, script keys)
     ("Structured Data", 5, ["07_schema"]),
     ("Mobile", 10, ["15_mobile"]),
     ("Content", 5, ["14_content"]),
+    ("Lighthouse", 10, ["12b_lighthouse"]),
 ]
 
 

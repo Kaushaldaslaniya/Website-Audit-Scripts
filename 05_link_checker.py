@@ -5,7 +5,8 @@
                 pages with no / very few internal links
   architecture: orphan pages, crawl depth from the homepage, important pages too deep, homepage -> main
                 sections, hub pages -> their detail pages (services, industries, technologies, blog,
-                portfolio), breadcrumbs on nested pages, header navigation & footer links
+                portfolio), breadcrumbs on nested pages, header navigation & footer links,
+                links that only appear after clicking a menu / tab (status checked; pages linked only that way)
                 (orphans / depth use the link graph of the whole-site crawl, so they work with --pages sample too)
 
   python "py files/05_link_checker.py" [--base URL] [--no-external]
@@ -116,6 +117,28 @@ def scan(loc):
 print(f"Scanning {len(pages)} pages ...")
 run_parallel(scan, pages, args.workers)
 
+# ------------------------------------------------------------ links that only appear after clicking menus / tabs
+js_links = (site.crawl or {}).get("js_links", {})
+in_pages = set(pages)
+js_rows = []
+for page_url, links in sorted(js_links.items()):
+    for url, zone in sorted(links.items()):
+        if page_url in in_pages:   # their status is checked below like every other internal link
+            internal_targets[site.to_fetch(url)].setdefault(page_url, f"(shown after clicking a {zone} menu / tab)")
+        js_rows.append((page_url, url, zone, "yes" if site.record(url).get("js_only") else ""))
+        if site.path(page_url) == "/" and zone == "menu":
+            nav_links.add((site.path(url), "(after opening the menu)"))
+if js_links:
+    total = sum(len(v) for v in js_links.values())
+    menu = sorted({u for v in js_links.values() for u, z in v.items() if z == "menu"})
+    audit.site(OPTIMIZATION, "Architecture", "Links rendered only after clicking a menu or tab",
+               current=f"{total} links on {len(js_links)} pages are not in the server HTML"
+                       + (f" ({len(menu)} in the header / navigation menus)" if menu else ""),
+               element=", ".join(site.path(u) for u in menu[:8]) or None,
+               detail="search engines don't click: these links pass no link signals unless the page is also linked "
+                      "in the HTML elsewhere")
+    audit.note("Links found only after JavaScript interaction", total)
+
 # ------------------------------------------------------------ internal link status (+ redirect chains)
 status_rows = []
 
@@ -199,8 +222,15 @@ for src, targets in crawl_graph.items():
 if complete:
     for p in sorted(in_scope - {"/"}):
         if not incoming.get(p):
+            rec = site.record(site.public(p))
+            if rec.get("js_only"):
+                audit.add(site.public(p), IMPORTANT, "Architecture", "Page linked only from JavaScript menus / tabs",
+                          current="0 links in server HTML; only shown after clicking a menu / tab",
+                          expected="at least one plain <a href> link in the server-rendered HTML",
+                          detail="found via " + ("sitemap.xml + " if rec.get("in_sitemap") else "") + "JavaScript menu")
+                continue
             audit.add(site.public(p), IMPORTANT, "Architecture", "Orphan page", current="0 pages link here",
-                      detail="only reachable through sitemap.xml" if site.record(site.public(p)).get("in_sitemap") else "")
+                      detail="only reachable through sitemap.xml" if rec.get("in_sitemap") else "")
 
 depth = {"/": 0}
 queue = deque(["/"])
@@ -252,4 +282,6 @@ audit.sheet("Hub coverage", ["Hub", "Detail pages", "Linked from hub", "Missing"
 audit.sheet("Header & footer", ["Zone", "Path", "Anchor"],
             [("header", p, t) for p, t in sorted(nav_links)] + [("footer", p, t) for p, t in sorted(footer_links)], (10, 45, 40))
 audit.sheet("All links", ["Page", "Link", "Type", "Anchor text", "rel"], link_rows, (50, 60, 9, 40, 22))
+audit.sheet("JavaScript-only links", ["Page", "Link (appears after a click)", "Zone", "Not linked anywhere in HTML"],
+            js_rows, (50, 60, 10, 14))
 audit.save("Link_Health_Report")

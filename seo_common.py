@@ -3,7 +3,9 @@ Shared helpers for the website audit scripts in this folder.
 
 - Pages to audit come from a crawl of the whole site (crawl_site): it starts at the homepage, sitemap.xml and the
   sitemaps in robots.txt, and follows every internal link it finds (<a>, <area>, canonical, hreflang alternates,
-  rel=next/prev, iframes, meta refresh, URLs inside JSON-LD and redirects). One crawl is shared by every script of
+  rel=next/prev, iframes, meta refresh, URLs inside JSON-LD and redirects). Then Chrome opens every menu / tab /
+  accordion on the main pages (discover_js_links) to find links that only exist after a click, and those are
+  crawled too (--no-js-discovery skips this). One crawl is shared by every script of
   a run_all.py run (kept in the system temp folder, not in report/); a script run on its own reuses a crawl of the
   same server from the last 30 minutes (--fresh-crawl forces a new one, --sitemap-only skips crawling).
 - Every report is saved in three formats, one folder per format - nothing else is written to report/:
@@ -215,6 +217,11 @@ def env_flag(name):
     return os.environ.get(name, "").lower() in ("1", "true", "yes")
 
 
+def default_browser_workers():
+    """Parallel Chrome instances for the browser scripts: half the CPU cores, 1-4."""
+    return max(1, min(4, (os.cpu_count() or 2) // 2))
+
+
 def parse_args(description, extra=None, default_pages="all"):
     ap = argparse.ArgumentParser(description=description)
     ap.add_argument("--base", default=default_base(),
@@ -233,6 +240,11 @@ def parse_args(description, extra=None, default_pages="all"):
                     help="crawl again even if a recent crawl of this server exists")
     ap.add_argument("--ignore-robots", action="store_true", default=env_flag("SEO_IGNORE_ROBOTS"),
                     help="also crawl URLs that robots.txt disallows")
+    ap.add_argument("--browser-workers", type=int,
+                    default=int(os.environ.get("SEO_BROWSER_WORKERS") or default_browser_workers()),
+                    help="Chrome instances running in parallel in the browser checks (default %(default)s)")
+    ap.add_argument("--no-js-discovery", action="store_true", default=env_flag("SEO_NO_JS_DISCOVERY"),
+                    help="don't open menus / tabs in Chrome to find links that only appear after JavaScript")
     if extra:
         extra(ap)
     return ap.parse_args()
@@ -528,9 +540,11 @@ def _robots(site):
     return rp, declared
 
 
-def crawl_site(site, max_pages=5000, workers=8, respect_robots=True):
-    """Breadth-first crawl of the audited server.
-    -> {"records": {url: record}, "edges": {page: [linked urls]}, "sitemap": [...], "stats": {...}}"""
+def crawl_site(site, max_pages=5000, workers=8, respect_robots=True, js_discovery=False, browser_workers=2):
+    """Breadth-first crawl of the audited server, then (js_discovery) the links that only appear after opening
+    menus / tabs in Chrome, then a crawl of those.
+    -> {"records": {url: record}, "edges": {page: [linked urls]}, "js_links": {page: {url: zone}}, "sitemap": [...],
+        "stats": {...}}"""
     from concurrent.futures import ThreadPoolExecutor
     rp, declared = _robots(site)
     sitemap_keys = {clean_url(site, u) for u in site.sitemap_urls}
@@ -594,9 +608,8 @@ def crawl_site(site, max_pages=5000, workers=8, respect_robots=True):
             links = discover_links(soup, key)
         return rec, links
 
-    started = time.time()
-    print(f"Crawling {site.base} (max {max_pages} URLs, robots.txt {'respected' if respect_robots else 'ignored'}) ...")
-    with ThreadPoolExecutor(max(1, workers)) as ex:
+    def drain(ex):
+        nonlocal queue
         while queue and len(records) < max_pages:
             batch, queue = queue[: max_pages - len(records)], queue[max_pages - len(records):]
             for rec, links in ex.map(visit, batch):
@@ -620,6 +633,37 @@ def crawl_site(site, max_pages=5000, workers=8, respect_robots=True):
                 if targets:
                     edges[key] = sorted(set(targets))
             print(f"  {len(records)} URLs crawled, {len(queue)} queued")
+
+    started = time.time()
+    print(f"Crawling {site.base} (max {max_pages} URLs, robots.txt {'respected' if respect_robots else 'ignored'}) ...")
+    js_links = {}
+    with ThreadPoolExecutor(max(1, workers)) as ex:
+        drain(ex)
+        if js_discovery:
+            # Menus, tabs, accordions and "load more" buttons often render their links only after a click / hover,
+            # so the HTML crawl above can't see them. Open them in Chrome, then crawl whatever new URLs appeared.
+            seeds = [k for k in sample_pages([k for k in order if records[k]["is_html"] and records[k]["status"] == 200],
+                                             per_section=1)]
+            static_out = defaultdict(set)
+            for src, targets in edges.items():
+                static_out[src].update(targets)
+            found = discover_js_links(site, seeds, browser_workers)
+            for page_url, links in found.items():
+                extra = {}
+                for url, zone in links.items():
+                    if not crawlable(site, url):
+                        continue
+                    target = clean_url(site, url)
+                    if target == page_url or target in static_out[page_url]:
+                        continue
+                    extra[target] = zone
+                    enqueue(url, page_url, "javascript")
+                if extra:
+                    js_links[page_url] = extra
+            new = sum(1 for item in queue if item[2] == "javascript")
+            print(f"JavaScript discovery: {sum(len(v) for v in js_links.values())} links that only appear after "
+                  f"clicking menus / tabs on {len(seeds)} pages, {new} of them new URLs")
+            drain(ex)
     truncated = bool(queue)
 
     # click depth from the homepage, incoming <a> links, final URL after redirects
@@ -637,9 +681,12 @@ def crawl_site(site, max_pages=5000, workers=8, respect_robots=True):
                     depth[t] = depth[cur] + 1
                     nxt.append(t)
         frontier = nxt
+    js_targets = {t for links in js_links.values() for t in links}
     for key, rec in records.items():
         rec["depth"] = depth.get(key)
         rec["inlinks"] = len(incoming.get(key, set()) - {key})
+        # linked only from menus / tabs that need a click: search engines don't click, so they may never find it
+        rec["js_only"] = key in js_targets and not (incoming.get(key, set()) - {key})
         rec["sources"] = len(rec.pop("_sources") - {key})
         final, hops = key, 0
         while records.get(final, {}).get("redirect_to") and hops < 10:
@@ -649,11 +696,12 @@ def crawl_site(site, max_pages=5000, workers=8, respect_robots=True):
 
     stats = {"crawled": len(records), "html_pages": sum(1 for r in records.values() if r["is_html"]),
              "sitemap_urls": len(site.sitemap_urls), "truncated": truncated, "max_pages": max_pages,
-             "respect_robots": respect_robots, "seconds": int(time.time() - started)}
+             "respect_robots": respect_robots, "js_discovery": bool(js_discovery),
+             "js_links": sum(len(v) for v in js_links.values()), "seconds": int(time.time() - started)}
     print(f"Crawl done: {stats['crawled']} URLs, {stats['html_pages']} HTML pages "
           f"({len(site.sitemap_urls)} in sitemap) in {stats['seconds']} s")
     return {"base": site.base, "time": run_time(), "date": run_date(), "created": time.time(),
-            "records": records, "order": order, "edges": edges, "sitemap": site.sitemap_urls,
+            "records": records, "order": order, "edges": edges, "js_links": js_links, "sitemap": site.sitemap_urls,
             "robots_sitemaps": declared, "stats": stats}
 
 
@@ -686,11 +734,20 @@ def _load_cached_crawl(site, args):
             continue
         st = data.get("stats", {})
         if data.get("base") == site.base and st.get("max_pages") == args.max_pages \
-                and st.get("respect_robots") == (not args.ignore_robots):
+                and st.get("respect_robots") == (not args.ignore_robots) \
+                and (st.get("js_discovery", False) or not want_js_discovery(args)):
             print(f"Using the crawl from {datetime.fromtimestamp(path.stat().st_mtime):%H:%M:%S} "
                   f"({st.get('html_pages')} HTML pages)")
             return data
     return None
+
+
+def want_js_discovery(args):
+    """Open menus / tabs in Chrome during the crawl unless disabled or Playwright isn't installed."""
+    if getattr(args, "no_js_discovery", False):
+        return False
+    import importlib.util
+    return importlib.util.find_spec("playwright") is not None
 
 
 def load_site(args, need_sitemap=True):
@@ -702,7 +759,8 @@ def load_site(args, need_sitemap=True):
     else:
         data = None if args.fresh_crawl else _load_cached_crawl(site, args)
         if data is None:
-            data = crawl_site(site, args.max_pages, args.workers, respect_robots=not args.ignore_robots)
+            data = crawl_site(site, args.max_pages, args.workers, respect_robots=not args.ignore_robots,
+                              js_discovery=want_js_discovery(args), browser_workers=args.browser_workers)
             try:
                 crawl_cache_path().write_text(json.dumps(data, default=list))
             except OSError:
@@ -861,6 +919,173 @@ def scroll_page(page, step=600, pause=120):
         }""",
         [step, pause],
     )
+
+
+def run_browser_pages(func, items, workers, label="pages"):
+    """func(browser, item) for every item on `workers` threads, each with its own Chrome (Playwright's sync API
+    needs one instance per thread). -> results in item order (None where func raised)."""
+    import queue as queue_mod
+    items = list(items)
+    results = [None] * len(items)
+    work = queue_mod.Queue()
+    for i, item in enumerate(items):
+        work.put((i, item))
+    done, lock, failures = [0], threading.Lock(), []
+
+    def worker():
+        try:
+            browser = Browser()
+        except SystemExit as e:   # Browser() exits when Chrome can't start
+            failures.append(str(e))
+            return
+        try:
+            while True:
+                try:
+                    i, item = work.get_nowait()
+                except queue_mod.Empty:
+                    return
+                try:
+                    if not browser.browser.is_connected():   # Chrome crashed: start a new one
+                        browser.close()
+                        browser = Browser()
+                    results[i] = func(browser, item)
+                except Exception as e:
+                    print(f"  ! {item}: {type(e).__name__}: {str(e)[:150]}")
+                with lock:
+                    done[0] += 1
+                    n = done[0]
+                if n % 10 == 0 or n == len(items):
+                    print(f"  {n}/{len(items)} {label}", flush=True)
+        finally:
+            try:
+                browser.close()
+            except Exception:
+                pass
+
+    threads = [threading.Thread(target=worker, daemon=True) for _ in range(max(1, min(workers, len(items))))]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    if failures and len(failures) == len(threads):
+        sys.exit(failures[0])
+    return results
+
+
+JS_LINK_RECORDER = """
+(() => {
+  const links = window.__auditLinks = new Map();
+  const zone = a => a.closest('header, nav, [role=dialog], [role=menu], [role=navigation]') ? 'menu'
+      : a.closest('footer') ? 'footer' : 'content';
+  const put = a => { const z = zone(a), old = links.get(a.href);   // a link seen in a menu counts as a menu link
+      if (!old || (z === 'menu' && old !== 'menu')) links.set(a.href, z); };
+  const grab = n => { if (!n || n.nodeType !== 1) return;
+      if (n.matches('a[href], area[href]')) put(n);
+      n.querySelectorAll('a[href], area[href]').forEach(put); };
+  window.__auditGrab = () => grab(document.documentElement);
+  new MutationObserver(ms => ms.forEach(m => m.type === 'attributes' ? grab(m.target) : m.addedNodes.forEach(grab)))
+      .observe(document, { childList: true, subtree: true, attributes: true, attributeFilter: ['href'] });
+})();
+"""
+
+# Opens every menu / tab / accordion / "load more" it can find, depth first: open one menu, click through its tabs and
+# sub-sections, then the next menu (opening a menu usually closes the previous one). header / nav / footer are only
+# explored on the first page: they are the same on every page.
+JS_LINK_EXPLORER = """
+async ([skipChrome, maxClicks]) => {
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const visible = el => { const r = el.getBoundingClientRect(); const s = getComputedStyle(el);
+      return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none'; };
+  const chrome = el => el.closest('header, nav, footer, [role=dialog], [role=navigation]');
+  const MORE = /^(load|show|view|see|read) (more|all)|^more$|^expand/i;
+  const EXPANDER = '[aria-expanded], [aria-haspopup], summary';
+  const usable = el => visible(el) && !el.disabled && !el.closest('a, form') && el.type !== 'submit'
+      && !(skipChrome && chrome(el));
+  const done = new WeakSet();
+  let clicks = 0;
+  const click = async (el, wait) => {
+    try { el.click(); } catch (e) { return false; }
+    clicks++; await sleep(wait); window.__auditGrab(); return true;
+  };
+  window.__auditGrab();
+  if (!skipChrome) {   // hover menus
+    for (const el of document.querySelectorAll('header li, header [aria-haspopup], nav li, nav [aria-haspopup]')) {
+      ['pointerover', 'mouseover'].forEach(t => el.dispatchEvent(new MouseEvent(t, { bubbles: true })));
+      await sleep(60); window.__auditGrab();
+    }
+  }
+  const tops = [...document.querySelectorAll(EXPANDER)].filter(usable);
+  const topSet = new Set(tops);
+  const candidates = () => [...document.querySelectorAll(
+      '[aria-expanded="false"], [aria-haspopup]:not([aria-expanded="true"]), [role=tab]:not([aria-selected="true"]), ' +
+      'details:not([open]) > summary, button, [role=button]')]
+    .filter(el => !done.has(el) && !topSet.has(el) && usable(el)
+            && (el.matches(EXPANDER + ', [role=tab]') || MORE.test((el.innerText || '').trim())));
+  const explore = async depth => {
+    if (depth > 4) return;
+    for (const el of candidates()) {
+      if (clicks >= maxClicks) return;
+      if (done.has(el)) continue;
+      done.add(el);
+      if (!el.isConnected || !visible(el)) continue;
+      if (await click(el, 180) && el.matches(EXPANDER)) await explore(depth + 1);
+    }
+  };
+  await explore(1);   // tabs / accordions already on the page
+  for (const t of tops) {
+    if (clicks >= maxClicks) break;
+    if (!t.isConnected || !visible(t)) continue;
+    if (t.getAttribute('aria-expanded') !== 'true') await click(t, 300);
+    await explore(1);
+  }
+  window.__auditGrab();
+  return { clicks, links: [...window.__auditLinks.entries()] };
+}
+"""
+
+
+def discover_js_links(site, pages, workers=2):
+    """Links that exist only after clicking menus / tabs / accordions -> {page: {absolute url: zone}}.
+    The first page is explored on a desktop and a phone viewport including header / nav / footer (desktop mega menus
+    and the mobile menu); the other pages only outside them."""
+    if not pages:
+        return {}
+    first = pages[0]
+
+    def explore(browser, loc):
+        out = {}
+        views = [("desktop", False, 1440, 900)] + ([("phone", True, 390, 844)] if loc == first else [])
+        for _, mobile, w, h in views:
+            ctx = browser.context(mobile=mobile, width=w, height=h)
+            ctx.add_init_script(JS_LINK_RECORDER)
+            page = ctx.new_page()
+
+            def stay(route, page=page):   # the page must not navigate away while buttons are clicked
+                try:
+                    req = route.request
+                    leave = (req.is_navigation_request() and req.frame == page.main_frame
+                             and page.url not in ("about:blank", "") and req.url.split("#")[0] != page.url.split("#")[0])
+                except Exception:
+                    leave = False
+                route.abort() if leave else route.continue_()
+
+            page.route("**/*", stay)
+            try:
+                page.goto(site.to_fetch(loc), wait_until="load", timeout=60000)
+                page.wait_for_timeout(600)
+                res = page.evaluate(JS_LINK_EXPLORER, [loc != first, 250])
+                for href, zone in res["links"]:
+                    full = href.split("#")[0]
+                    if full.startswith("http") and site.is_internal(full):
+                        out.setdefault(full, zone)
+            except Exception as e:
+                print(f"  ! JavaScript discovery failed on {loc}: {str(e)[:120]}")
+            finally:
+                ctx.close()
+        return loc, out
+
+    print(f"Opening menus / tabs in Chrome on {len(pages)} pages to find JavaScript-only links ...")
+    return {loc: links for loc, links in filter(None, run_browser_pages(explore, pages, workers, "pages explored"))}
 
 
 # ---------------------------------------------------------------------------

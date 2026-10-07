@@ -11,6 +11,18 @@ patterns above the general ones.
 import re
 
 RULES = [
+    # ------------------------------------------------------------------ Lighthouse (12b) - first, so generic rules don't win
+    (r"lighthouse could not audit",
+     "Lighthouse could not finish auditing the page (it timed out, crashed or the page failed to load), so no "
+     "Lighthouse scores exist for it.",
+     "A completed Lighthouse run",
+     "Open the page in Chrome and check it loads without errors; re-run 12b with a higher --timeout or fewer "
+     "--browser-workers."),
+    (r"lighthouse .* score (poor|needs improvement)",
+     "The page's Lighthouse category score (0-100, the same score PageSpeed Insights shows) is below the green range.",
+     ">= 90 / 100",
+     "Fix the failed Lighthouse audits listed for this URL (Issue names starting with 'Lighthouse:'), most heavily "
+     "weighted first: LCP, TBT and CLS for Performance."),
     # ------------------------------------------------------------------ crawl / status / redirects
     (r"broken internal url|page returns|page not reachable|broken page|sitemap url is not 200",
      "The URL does not return a working page (HTTP error, timeout or connection failure). Visitors and search engines "
@@ -50,6 +62,18 @@ RULES = [
      "and are often treated as unimportant.",
      "At least one contextual internal link from a related page",
      "Link to the page from its hub/listing page, navigation, related-content blocks or breadcrumbs."),
+    (r"linked only from javascript menus",
+     "The only links to this page are inside menus, tabs or accordions that are rendered after a click or hover. "
+     "Search engines render pages but don't click, so they may never find the page through the site's links.",
+     "At least one plain <a href> link in the server-rendered HTML",
+     "Render every menu / tab panel in the HTML (hide inactive ones with CSS or the hidden attribute instead of not "
+     "rendering them), or link the page from its hub page, footer or related-content blocks."),
+    (r"links rendered only after clicking",
+     "Some links (e.g. the inactive tabs of the header mega menu) only exist in the page after a click or hover. "
+     "Search engines don't click, so these links pass no link signals and can't be used for discovery.",
+     "All navigation links present in the server-rendered HTML",
+     "Render all menu / tab panels on the server and toggle their visibility with CSS (or the hidden attribute) "
+     "instead of mounting them only when opened."),
     (r"not reachable from homepage",
      "No chain of links leads from the homepage to this page.",
      "Every page reachable by following links from the homepage",

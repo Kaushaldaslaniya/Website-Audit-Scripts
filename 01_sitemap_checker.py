@@ -5,6 +5,7 @@
   robots.txt: reachable, doesn't block the site, declares the sitemap on the right host
   crawl coverage (every URL the crawler discovered, not only the sitemap): live pages missing from the sitemap,
       broken internal URLs, internal URLs that redirect, URLs blocked by robots.txt, crawl limit reached
+      ("Found via" = javascript: the link only appears after clicking a menu / tab)
 
   python "py files/01_sitemap_checker.py" [--base URL]
 """
