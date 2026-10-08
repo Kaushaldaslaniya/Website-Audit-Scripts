@@ -145,7 +145,8 @@ def check(loc):
         script_rows.append((loc, host, src[:200], "yes" if s.get("integrity") else "no", s.get("crossorigin", ""),
                             "async" if s.has_attr("async") else "defer" if s.has_attr("defer") else "blocking"))
     for a in soup.find_all("a", target="_blank", href=True):
-        rel = " ".join(a.get("rel") or [])
+        raw_rel = a.get("rel")
+        rel = " ".join(raw_rel) if isinstance(raw_rel, list) else str(raw_rel or "")
         if "noopener" not in rel and "noreferrer" not in rel and not site.is_internal(urljoin(loc, a["href"])):
             audit.add(loc, OPTIMIZATION, "Links", "target=_blank without rel=noopener", current=f'rel="{rel}"',
                       element=a["href"][:200])

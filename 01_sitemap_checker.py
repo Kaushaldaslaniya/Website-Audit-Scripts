@@ -12,7 +12,7 @@
 import re
 from datetime import datetime, timezone
 from urllib import robotparser
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 from bs4 import BeautifulSoup
 
@@ -45,7 +45,7 @@ else:
                    detail="set NEXT_PUBLIC_SITE_URL to the live https domain for production builds")
     if site.site_scheme != "https":
         audit.site(CRITICAL, "Sitemap", "Sitemap URLs are not HTTPS", current=f"{site.site_scheme}://{site.site_host}")
-    hosts = sorted({u.split("/")[2] for u in sitemap_urls})
+    hosts = sorted({urlparse(u).netloc for u in sitemap_urls if urlparse(u).netloc})
     if len(hosts) > 1:
         audit.site(IMPORTANT, "Sitemap", "Sitemap mixes hosts", current=", ".join(hosts))
     raw = [l.text.strip() for l in site.sitemap_root.iter() if l.tag.endswith("loc") and l.text]
@@ -93,7 +93,8 @@ else:
     if not declared:
         audit.site(IMPORTANT, "Robots.txt", "robots.txt has no Sitemap: line", current="(none)")
     for sm in declared:
-        if site.site_host and sm.split("/")[2] != site.site_host:
+        sm_host = urlparse(sm).netloc
+        if site.site_host and sm_host and sm_host != site.site_host:
             audit.site(IMPORTANT, "Robots.txt", "robots.txt sitemap on a different host", current=sm,
                        expected=f"a sitemap URL on {site.site_host}")
         elif fetch(site.to_fetch(sm))["status"] != 200:
@@ -133,7 +134,10 @@ def check(loc):
         canon_abs = urljoin(loc, row["canonical"]) if row["canonical"] else ""
         if canon_abs and norm(canon_abs) != norm(loc):
             if site.path(canon_abs) == site.path(loc):
-                host_mismatch.add((canon_abs.split("/")[2], loc.split("/")[2]))
+                chost = urlparse(canon_abs).netloc
+                lhost = urlparse(loc).netloc
+                if chost and lhost:
+                    host_mismatch.add((chost, lhost))
             else:
                 audit.add(loc, IMPORTANT, "Sitemap URL", "Sitemap URL canonicalises elsewhere", current=row["canonical"],
                           expected=loc)

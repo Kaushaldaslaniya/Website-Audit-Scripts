@@ -23,7 +23,7 @@ LAYOUT_JS = """
       (typeof el.className === 'string' && el.className ? '.' + el.className.trim().split(/\\s+/).slice(0, 3).join('.') : '');
   const visible = el => { const s = getComputedStyle(el); const r = el.getBoundingClientRect();
       return s.visibility !== 'hidden' && s.display !== 'none' && r.width > 0 && r.height > 0; };
-  const all = [...document.body.querySelectorAll('*')];
+  const all = document.body ? [...document.body.querySelectorAll('*')] : [];
   const overflowing = all.filter(el => { const r = el.getBoundingClientRect();
       return visible(el) && (r.right > vw + 1 || r.left < -1) && !clipped(el) && getComputedStyle(el).position !== 'fixed'; });
   const roots = overflowing.filter(el => !overflowing.includes(el.parentElement)).slice(0, 6)
@@ -66,7 +66,7 @@ MENU_JS = """
 async () => {
   const visible = el => { const r = el.getBoundingClientRect(); const s = getComputedStyle(el);
       return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none' && r.bottom > 0 && r.top < innerHeight; };
-  const header = document.querySelector('header') || document.body;
+  const header = document.querySelector('header') || document.body || document.documentElement;
   const btn = [...header.querySelectorAll('button, [role=button]')].find(b => visible(b) &&
       /menu|navigation|nav|toggle/i.test((b.getAttribute('aria-label') || '') + ' ' + (b.innerText || '') + ' ' + (b.getAttribute('aria-controls') || '')))
       || [...header.querySelectorAll('button[aria-expanded]')].find(visible);

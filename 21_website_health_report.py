@@ -27,18 +27,23 @@ from seo_common import (CRITICAL, FILLS, IMPORTANT, INFO, ISSUE_COLUMNS, OPTIMIZ
                         SEVERITY_ORDER, SITE_WIDE, clean_cell, grade, grade_fill, rel_path, remove_old_reports, report_path, write_csv,
                         write_sheet)
 
-CATEGORIES = [  # (name, weight %, script keys)
-    ("Technical SEO", 15, ["01_sitemap", "09_technical", "08_hreflang", "13_nextjs"]),
-    ("On-Page SEO", 15, ["02_page_seo", "03_headings", "06_social", "17_heading_order", "20_seo_report"]),
-    ("Performance", 15, ["12_performance", "12a_cwv", "16_third_party"]),
+CATEGORIES = [  # (name, weight %, script keys) - a category with no report is "Not measured" and left out
+    ("Technical SEO", 15, ["01_sitemap", "09_technical", "08_hreflang", "13_nextjs", "25_html_validation"]),
+    ("On-Page SEO", 15, ["02_page_seo", "03_headings", "06_social", "17_heading_order", "20_seo_report",
+                         "26_text_quality"]),
+    ("Performance", 15, ["12_performance", "12a_cwv", "16_third_party", "27_assets"]),
     ("Accessibility", 10, ["10_accessibility"]),
     ("Security", 8, ["11_security"]),
     ("Image", 7, ["04_images", "18_image_alt"]),
     ("Link Health", 10, ["05_links", "19_third_party_urls"]),
     ("Structured Data", 5, ["07_schema"]),
     ("Mobile", 10, ["15_mobile"]),
-    ("Content", 5, ["14_content"]),
+    ("Content", 5, ["14_content", "31_english"]),
     ("Lighthouse", 10, ["12b_lighthouse"]),
+    ("Business info & Forms", 8, ["22_business_info", "23_forms"]),
+    ("Navigation", 7, ["24_navigation"]),
+    ("Code & Repo", 5, ["28_repo"]),
+    ("Migration (live vs dev)", 5, ["29_live_vs_dev"]),
 ]
 
 
@@ -48,10 +53,10 @@ def load_summaries():
     run_date = os.environ.get("SEO_RUN_DATE")
     found = {}
     for f in REPORT_ROOT.glob("*/json/*.json"):
-        if f.name.startswith("Website_Health_Report_") or (run_date and run_time and f.parent.parent.name != run_date):
+        if f.name.startswith(("Website_Health_Report_", "QA_Checklist_Report_")) or (run_date and run_time and f.parent.parent.name != run_date):
             continue
         try:
-            data = json.loads(f.read_text())
+            data = json.loads(f.read_text(encoding="utf-8"))
             r = data["report"]
             key = r["key"]
         except (ValueError, KeyError, TypeError):
@@ -96,7 +101,7 @@ for s in sorted(summaries.values(), key=lambda s: s["key"]):
     if not path or not path.exists():
         missing_json.append(s["title"])
         continue
-    data = json.loads(path.read_text())
+    data = json.loads(path.read_text(encoding="utf-8"))
     items = [(u["url"], i) for u in data.get("urls", []) for i in u["issues"]]
     items += [(SITE_WIDE, i) for i in data.get("site_wide_issues", [])]
     for u in data.get("urls", []):

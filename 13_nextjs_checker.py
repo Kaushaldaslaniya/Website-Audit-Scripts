@@ -281,7 +281,7 @@ def _browser_check(ctx, loc):
     try:
         page.goto(site.to_fetch(loc), wait_until="networkidle", timeout=60000)
         page.wait_for_timeout(1000)
-        rendered = page.evaluate("() => (document.querySelector('main') || document.body).innerText")
+        rendered = page.evaluate("() => (document.querySelector('main') || document.body)?.innerText || ''")
     except Exception as e:
         audit.add(loc, IMPORTANT, "Browser", "Page failed to load in Chrome", current=str(e)[:200])
         page.close()

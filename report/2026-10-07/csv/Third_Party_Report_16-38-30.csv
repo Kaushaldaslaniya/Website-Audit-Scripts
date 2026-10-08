@@ -1,0 +1,5 @@
+﻿URL,Severity,Priority,Category,Issue,Description,Current value,Expected / recommended value,Recommended fix,Element / resource,Details,Page HTTP,In sitemap,Report
+http://localhost:3000/digital-services/content-marketing,Important,P2 - fix soon,Browser,Page failed to load in Chrome,The page could not be loaded in the browser test.,"Page.goto: Timeout 60000ms exceeded.
+Call log:
+  - navigating to ""http://localhost:3000/digital-services/content-marketing"", waiting until ""networkidle""
+",Page loads within the timeout,"Open the page manually, check console/network errors and server logs.",,,200,yes,Third Party Report

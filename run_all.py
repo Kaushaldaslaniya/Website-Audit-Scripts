@@ -4,7 +4,8 @@ Run every audit script one after another and build the Website Health master rep
   python "py files/run_all.py"                                   # audits NEXT_PUBLIC_REPORT_URL from .env.local
   python "py files/run_all.py" --base http://127.0.0.1:4000      # another server
   python "py files/run_all.py" --pages sample                    # quick run: main pages + 2 per section
-  python "py files/run_all.py" --only 02,05,12a                  # just some scripts (21 always runs last)
+  python "py files/run_all.py" --only 02,05,12a                  # just some scripts (21 + 30 always run last)
+  python "py files/run_all.py" --live https://www.example.com    # also compare with the current live site (29)
   python "py files/run_all.py" --skip 12b --browser-workers 2     # skip Lighthouse / fewer parallel Chromes
   python "py files/run_all.py" --no-browser                      # no Chrome at all (fast, HTML checks only)
   python "py files/run_all.py" --sitemap-only                    # old behaviour: sitemap URLs only, no crawling
@@ -31,12 +32,14 @@ from datetime import datetime
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-MASTER = "21_website_health_report.py"
-NUMBERED = sorted(p.name for p in HERE.glob("[0-9][0-9]*_*.py") if p.name != MASTER)  # 01 ... 20 (incl. 12a)
+MASTERS = ["21_website_health_report.py", "30_qa_checklist_report.py"]   # always run last, in this order
+MASTER = MASTERS[0]
+NUMBERED = sorted(p.name for p in HERE.glob("[0-9][0-9]*_*.py") if p.name not in MASTERS)  # 01 ... 31 (incl. 12a)
 BROWSER_SCRIPTS = {"10_accessibility_checker.py": ["--no-browser"], "13_nextjs_checker.py": ["--no-browser"],
-                   "16_third_party_checker.py": ["--no-browser"],
+                   "16_third_party_checker.py": ["--no-browser"], "23_forms_checker.py": ["--no-browser"],
+                   "27_assets_checker.py": ["--no-browser"], "31_english_grammar_checker.py": ["--no-browser"],
                    "12_performance_checker.py": None, "12a_core_web_vitals_checker.py": None,
-                   "12b_lighthouse_checker.py": None, "15_mobile_checker.py": None}
+                   "12b_lighthouse_checker.py": None, "15_mobile_checker.py": None, "24_navigation_checker.py": None}
 
 
 def main():
@@ -62,6 +65,10 @@ def main():
     ap.add_argument("--max-pages", type=int, default=5000, help="crawl at most this many URLs")
     ap.add_argument("--sitemap-only", action="store_true", help="audit only sitemap.xml URLs (no crawling)")
     ap.add_argument("--ignore-robots", action="store_true", help="also crawl URLs that robots.txt disallows")
+    ap.add_argument("--live", default="", help="current live site for 29 (default: qa_config.json live_url)")
+    ap.add_argument("--visual", action="store_true", help="29: screenshot live vs dev and compare")
+    ap.add_argument("--repo-build", action="store_true",
+                    help="28: also run npm run build (stop `next start` first - the build rewrites .next)")
     args = ap.parse_args()
     args.base = args.base.rstrip("/")
 
@@ -89,13 +96,17 @@ def main():
         env["SEO_IGNORE_ROBOTS"] = "1"
     if args.no_js_discovery or args.no_browser:
         env["SEO_NO_JS_DISCOVERY"] = "1"
+    if args.live:
+        env["QA_LIVE_URL"] = args.live
+    if args.repo_build:
+        env["SEO_REPO_BUILD"] = "1"
     report_dir = seo_common.ensure_report_root() / env["SEO_RUN_DATE"]   # py files/report, created if missing
 
     def prefix(name):
         return name.split("_", 1)[0]
 
-    only = {p.strip() for p in args.only.split(",") if p.strip()}
-    skip = {p.strip() for p in args.skip.split(",") if p.strip()}
+    only = {p.strip().zfill(2) if p.strip().isdigit() else p.strip() for p in args.only.split(",") if p.strip()}
+    skip = {p.strip().zfill(2) if p.strip().isdigit() else p.strip() for p in args.skip.split(",") if p.strip()}
     scripts = [s for s in NUMBERED if (not only or prefix(s) in only) and prefix(s) not in skip]
     plan = []
     for s in scripts:
@@ -104,8 +115,10 @@ def main():
             if BROWSER_SCRIPTS[s] is None:
                 continue
             extra = BROWSER_SCRIPTS[s]
+        if s.startswith("29_") and args.visual and not args.no_browser:
+            extra = extra + ["--visual"]
         plan.append((s, extra))
-    plan.append((MASTER, []))
+    plan += [(m, []) for m in MASTERS]
 
     if not only and not skip:   # full run: start from an empty py files/report
         seo_common.clear_reports()

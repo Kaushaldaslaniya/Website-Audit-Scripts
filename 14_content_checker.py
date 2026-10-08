@@ -79,7 +79,7 @@ def check(loc):
         audit.add(loc, IMPORTANT, "Length", "Very short page", current=f"{n} words in <main>", expected=f"{THIN}+ words")
     elif n < THIN:
         audit.add(loc, OPTIMIZATION, "Length", "Thin content", current=f"{n} words in <main>", expected=f"{THIN}+ words")
-    docs[loc] = (hashlib.md5(" ".join(words).lower().encode()).hexdigest(), minhash([w.lower() for w in words]))
+    docs[loc] = (hashlib.md5(" ".join(words).lower().encode(), usedforsecurity=False).hexdigest(), minhash([w.lower() for w in words]))
     for p in main.find_all(["p", "li"]):
         t = text_of(p)
         if len(t) >= 80:

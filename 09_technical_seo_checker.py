@@ -137,7 +137,9 @@ def check(loc):
         absolute = urljoin(loc, canonical)
         if norm(absolute) != norm(loc):
             if site.path(absolute) == site.path(loc):
-                host_mismatch.add(f"canonical host {absolute.split('/')[2]} vs sitemap host {loc.split('/')[2]}")
+                c_host = urlparse(absolute).netloc or absolute
+                s_host = urlparse(loc).netloc or loc
+                host_mismatch.add(f"canonical host {c_host} vs sitemap host {s_host}")
             else:
                 audit.add(loc, CRITICAL, "Canonical", "Canonical is not self-referencing", current=canonical, expected=loc)
         if site.is_internal(absolute):

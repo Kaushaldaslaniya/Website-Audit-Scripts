@@ -156,7 +156,8 @@ def check(loc):
                                   current=f"missing {', '.join(missing)}", element=str(it)[:150])
             if t == "FAQPage":
                 for q in e.get("mainEntity") or []:
-                    if not (isinstance(q, dict) and q.get("name") and (q.get("acceptedAnswer") or {}).get("text")):
+                    acc = q.get("acceptedAnswer") if (isinstance(q, dict) and isinstance(q.get("acceptedAnswer"), dict)) else {}
+                    if not (isinstance(q, dict) and q.get("name") and acc.get("text")):
                         audit.add(loc, IMPORTANT, "Completeness", "FAQ question without name/acceptedAnswer.text",
                                   current="name or acceptedAnswer.text empty", element=str(q)[:150])
             entity_rows.append((loc, t, e.get("@id", ""), e.get("name") or e.get("headline") or "",
