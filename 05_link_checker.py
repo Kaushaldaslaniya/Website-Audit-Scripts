@@ -67,6 +67,13 @@ def scan(loc):
         if href.startswith(("#", "mailto:", "tel:", "javascript:", "sms:")):
             if href.startswith("javascript:"):
                 audit.add(loc, IMPORTANT, "Links", "javascript: link", current=href[:100], element=f"<a> '{label[:60]}'")
+            elif href in ("#", "#!") and a.get("role") != "button":
+                audit.add(loc, IMPORTANT, "Links", "Placeholder link (href=\"#\")", current=f'href="{href}"',
+                          element=f"<a> '{label[:60]}'")
+            elif href.startswith("#") and len(href) > 1 and not soup.find(id=href[1:]) \
+                    and not soup.find(attrs={"name": href[1:]}):
+                audit.add(loc, OPTIMIZATION, "Links", "In-page anchor points to a missing id", current=href[:100],
+                          element=f"<a> '{label[:60]}'")
             continue
         count += 1
         absolute = urljoin(site.to_fetch(loc), href).split("#")[0]
@@ -174,7 +181,7 @@ for target, final, hops, loop in run_parallel(probe_internal, sorted(internal_ta
         for s, label in sorted(sources.items()):
             audit.add(s, sev, "Internal links", check, current=f"{path} -> {chain}" if redirects else f"{path} -> HTTP {final}",
                       expected=expected, element=f"<a href={path}> '{label}'")
-    status_rows.append((path, "internal", final, result, chain, len(sources), sorted(sources)[0]))
+    status_rows.append((path, "internal", final, result, chain, len(sources), sorted(sources)[0] if sources else ""))
 
 # ------------------------------------------------------------ external links
 if not args.no_external:
@@ -200,7 +207,7 @@ if not args.no_external:
             result = f"redirects to {res['url'][:80]}"
         else:
             result = "OK"
-        status_rows.append((target[:250], "external", st, result, res["error"], len(sources), sorted(sources)[0]))
+        status_rows.append((target[:250], "external", st, result, res["error"], len(sources), sorted(sources)[0] if sources else ""))
 
 # ------------------------------------------------------------ architecture (whole-site link graph from the crawl)
 if site.crawl:

@@ -1,0 +1,30 @@
+{
+  "_help": "Project expectations for the QA checks (22-30). Empty values are auto-detected from the site (the most common value wins), so fill them in to check against the CONFIRMED values instead. Keys starting with _ are comments.",
+  "company": "",
+  "_phones": "confirmed phone number(s), any format, e.g. [\"+91 95128 15630\"]. Other numbers on the site are reported.",
+  "phones": [],
+  "emails": [],
+  "_address": "confirmed street address as it should appear (one line); empty = only check that every page shows the same address",
+  "address": "",
+  "_live_url": "the current production site, for 29_live_vs_dev_checker.py (live sitemap + content parity). Can also be passed with --live.",
+  "live_url": "",
+  "_legal_site": "true for law firms: forms must have a required disclaimer checkbox, footer must link a disclaimer page",
+  "legal_site": false,
+  "_forbidden_terms": "text that must not appear anywhere on the site (old vendor, old brand, staging names ...). Case-insensitive.",
+  "forbidden_terms": [
+    "lorem ipsum",
+    "findlaw",
+    "wp-content"
+  ],
+  "_required_footer_links": "words that must appear in a footer link (text or URL)",
+  "required_footer_links": [
+    "privacy",
+    "terms"
+  ],
+  "_social_profiles": "expected social profile URLs; empty = only check the ones on the site are real profiles that respond",
+  "social_profiles": [],
+  "_spelling_ignore": "optional: words the English check (31) must never report. Normally leave it empty - names, brands and the site's own terms are recognised automatically.",
+  "spelling_ignore": [],
+  "_nav_expected": "top-level navigation labels that must be in the header (desktop and mobile), e.g. [\"Services\", \"Contact\"]",
+  "nav_expected": []
+}

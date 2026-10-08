@@ -102,7 +102,8 @@ def failing_items(details, limit=5):
     for it in items:
         if isinstance(it, dict):
             sub = (it.get("subItems") or {}).get("items") if isinstance(it.get("subItems"), dict) else None
-            label = item_label(it) or (item_label(sub[0]) if sub else "")
+            sub_label = item_label(sub[0]) if (isinstance(sub, list) and sub and isinstance(sub[0], dict)) else ""
+            label = item_label(it) or sub_label
             if label and label not in labels:
                 labels.append(label)
         if len(labels) >= limit:

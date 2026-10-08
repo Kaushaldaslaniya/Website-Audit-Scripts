@@ -28,7 +28,9 @@ args = parse_args("Open Graph / social meta checker")
 site, urls = load_site(args)
 pages = select_pages(urls, args)
 audit = Audit("06_social", "Social Meta Report", "On-Page SEO", site)
+import threading
 image_cache = {}
+image_cache_lock = threading.Lock()
 
 
 def check_image(url_value, loc, label):
@@ -36,7 +38,9 @@ def check_image(url_value, loc, label):
         audit.add(loc, IMPORTANT, label, f"{label} image is not an absolute URL", current=url_value,
                   expected=urljoin(site.public("/"), url_value))
         url_value = urljoin(site.public("/"), url_value)
-    if url_value not in image_cache:
+    with image_cache_lock:
+        in_cache = url_value in image_cache
+    if not in_cache:
         res = fetch(site.to_fetch(url_value) if site.is_internal(url_value) else url_value)
         size = None
         ctype = res["headers"].get("Content-Type", "")
@@ -46,8 +50,10 @@ def check_image(url_value, loc, label):
                     size = im.size
             except Exception:
                 pass
-        image_cache[url_value] = (res["status"], ctype, size, len(res["content"]))
-    status, ctype, size, nbytes = image_cache[url_value]
+        with image_cache_lock:
+            image_cache[url_value] = (res["status"], ctype, size, len(res["content"]))
+    with image_cache_lock:
+        status, ctype, size, nbytes = image_cache[url_value]
     if status != 200 or not ctype.startswith("image/"):
         audit.add(loc, IMPORTANT, label, f"Broken {label} image", current=f"HTTP {status} {ctype}".strip(),
                   element=url_value)
@@ -56,7 +62,7 @@ def check_image(url_value, loc, label):
                   element=url_value)
     elif size:
         w, h = size
-        if w < 600 or abs(w / h - 1200 / 630) > 0.15:
+        if w < 600 or h == 0 or (h > 0 and abs(w / h - 1200 / 630) > 0.15):
             audit.add(loc, IMPORTANT, label, f"{label} image not 1200x630", current=f"{w}x{h} px",
                       expected="1200x630 px", element=url_value)
         if nbytes > 5 * 1024 * 1024:

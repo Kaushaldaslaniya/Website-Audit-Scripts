@@ -1,0 +1,91 @@
+﻿ID,Section,Check,Type,Status,Automatic status,Result,Owner,Critical,Important,Optimization,How / notes,Reports
+ENG-01,English content,No spelling mistakes in the page text,AUTO,FAIL,FAIL,58 issue(s) on 46 page(s): Spelling: Possible spelling mistake found. (57x); Spelling: Possible spelling mistake. “…” is British English.,content,0,6,52,,31_english
+ENG-02,English content,"No grammar mistakes (verb forms, agreement, repeated phrases)",AUTO,FAIL,FAIL,65 issue(s) on 65 page(s): Grammar: This phrase is duplicated. You should probably use “…” only once. (59x); Grammar: You’ve repeated a verb. Did you mean to only write one of them?; Grammar: A determiner may be missing.; +4 more issue types,content,0,65,0,,31_english
+ENG-03,English content,"Spacing correct (space after full stops / commas, none before them)",AUTO,WARN,WARN,3 issue(s) on 3 page(s): Spacing: Add a space between sentences. (3x),content,0,0,3,,31_english
+ENG-04,English content,"Punctuation and typography reviewed (commas, hyphens, capitalisation)",AUTO,WARN,WARN,"104 issue(s) on 85 page(s): Punctuation: Use a comma before “…” if it connects two independent clauses (unless they are closely con (26x); Typographical: This word is normally spelled as one. (25x); Typographical: For abbreviations such as “…”, use all capital letters. The rare word “…” is a synonym for (17x); +18 more issue types",content,0,0,104,,31_english
+ENG-05,English content,"Possible word misuse reviewed (their / there, in / on the website ...)",AUTO+HUMAN,WARN,WARN,"4 issue(s) on 3 page(s): Word misuse: The usual collocation for technology is “…”, not “…”. (2x); Word misuse: The usual collocation for “…” is “…”. Did you mean “…”?; Word misuse: Consider using a more common abbreviation of this university degree. - also confirm by hand: Read the WARN items of the English Grammar report; real names / terms can be ignored.",content,0,0,4,Read the WARN items of the English Grammar report; real names / terms can be ignored.,31_english
+A11Y-01,Performance and accessibility,axe-core: no serious / critical accessibility violations,AUTO,SKIP,SKIP,not run: 10 (10_accessibility),dev,0,0,0,,10_accessibility
+A11Y-02,Performance and accessibility,"Keyboard: everything reachable, focus visible",AUTO,SKIP,SKIP,not run: 10 (10_accessibility),dev,0,0,0,,10_accessibility
+A11Y-03,Performance and accessibility,120% / 200% zoom without horizontal scrolling,AUTO,SKIP,SKIP,not run: 24 (24_navigation),dev,0,0,0,,24_navigation
+A11Y-04,Performance and accessibility,Touch targets big enough on phones,AUTO,SKIP,SKIP,"not run: 10 (10_accessibility), 15 (15_mobile)",dev,0,0,0,,"10_accessibility, 15_mobile"
+CODE-01,Code and repo,Production build succeeds,AUTO,SKIP,SKIP,not run: 28 (28_repo),dev,0,0,0,"Stop `next start`, then run  qa.py run CODE-01 --repo-build",28_repo
+CODE-02,Code and repo,No ESLint errors and no TypeScript errors,AUTO,SKIP,SKIP,not run: 28 (28_repo),dev,0,0,0,,28_repo
+CODE-03,Code and repo,README customised; .gitignore complete; no build output committed,AUTO,SKIP,SKIP,not run: 28 (28_repo),dev,0,0,0,,28_repo
+CODE-04,Code and repo,No secrets / .env files committed; security scan of the code clean,AUTO,SKIP,SKIP,not run: 28 (28_repo),dev,0,0,0,,28_repo
+CODE-05,Code and repo,Dependencies have no high / critical vulnerabilities (npm audit),AUTO,SKIP,SKIP,not run: 28 (28_repo),dev,0,0,0,,28_repo
+CODE-06,Code and repo,W3C HTML validator: no errors,AUTO,SKIP,SKIP,not run: 25 (25_html_validation),dev,0,0,0,,25_html_validation
+CODE-07,Code and repo,"No console errors, hydration errors or failed requests",AUTO,SKIP,SKIP,"not run: 12b (12b_lighthouse), 13 (13_nextjs)",dev,0,0,0,,"12b_lighthouse, 13_nextjs"
+CODE-08,Code and repo,No leftover console.log / localhost / staging URLs,AUTO,SKIP,SKIP,not run: 13 (13_nextjs),dev,0,0,0,,13_nextjs
+CODE-09,Code and repo,"Fonts are WOFF2 / WOFF, preloaded, with font-display",AUTO,SKIP,SKIP,"not run: 13 (13_nextjs), 27 (27_assets)",dev,0,0,0,,"13_nextjs, 27_assets"
+CODE-10,Code and repo,Logo is sharp on retina screens (2x bitmap or SVG),AUTO,SKIP,SKIP,not run: 27 (27_assets),dev,0,0,0,,27_assets
+CODE-11,Code and repo,"Referenced files exist (icons, preload, manifest, feeds, PDFs)",AUTO,SKIP,SKIP,not run: 27 (27_assets),dev,0,0,0,,27_assets
+CODE-12,Code and repo,"ALL CAPS is done with CSS, not typed in the text",AUTO,SKIP,SKIP,not run: 26 (26_text_quality),content,0,0,0,,26_text_quality
+CODE-13,Code and repo,"Third-party scripts / widgets intended and working (chat, analytics, reviews)",AUTO+HUMAN,SKIP,SKIP,"not run: 16 (16_third_party), 19 (19_third_party_urls)",client,0,0,0,"Confirm with the client which add-ons (chat, call tracking, review widgets) the new site must have.","16_third_party, 19_third_party_urls"
+FRM-01,Forms,"Lead forms ask for name + email; fields have names, types and autocomplete",AUTO,SKIP,SKIP,not run: 23 (23_forms),dev,0,0,0,,23_forms
+FRM-02,Forms,Labels are clean and capitalised; required fields marked and announced,AUTO,SKIP,SKIP,"not run: 10 (10_accessibility), 23 (23_forms)",dev,0,0,0,,"10_accessibility, 23_forms"
+FRM-03,Forms,Empty / invalid submissions are blocked with clear error messages,AUTO,SKIP,SKIP,not run: 23 (23_forms),dev,0,0,0,,23_forms
+FRM-04,Forms,"Submission set up: https endpoint, POST, thank-you page works, spam protection",AUTO,SKIP,SKIP,not run: 23 (23_forms),dev,0,0,0,,23_forms
+FRM-06,Forms,Site search (if any) returns results,AUTO,SKIP,SKIP,not run: 23 (23_forms),dev,0,0,0,,23_forms
+FTR-01,Footer and legal,Footer links to privacy / terms (and disclaimer on legal sites) work,AUTO,SKIP,SKIP,not run: 22 (22_business_info),dev,0,0,0,,22_business_info
+FTR-02,Footer and legal,"Copyright year is current (generated, not typed)",AUTO,SKIP,SKIP,not run: 22 (22_business_info),dev,0,0,0,,22_business_info
+FTR-03,Footer and legal,Legal / utility pages have no lead forms,AUTO,SKIP,SKIP,not run: 23 (23_forms),dev,0,0,0,,23_forms
+FTR-04,Footer and legal,Unknown URLs return a real 404 page with links back,AUTO,SKIP,SKIP,not run: 09 (09_technical),dev,0,0,0,,09_technical
+MAP-01,Sitemap and content,"sitemap.xml valid, https, on the live host, every URL 200 and indexable",AUTO,SKIP,SKIP,not run: 01 (01_sitemap),dev,0,0,0,,01_sitemap
+MAP-02,Sitemap and content,Every live page is in the sitemap; robots.txt points to it,AUTO,SKIP,SKIP,not run: 01 (01_sitemap),dev,0,0,0,,01_sitemap
+MAP-03,Sitemap and content,Every URL of the current live site exists on the new site or redirects,AUTO,SKIP,SKIP,not run: 29 (29_live_vs_dev),dev,0,0,0,,29_live_vs_dev
+MAP-04,Sitemap and content,"Content carried over from the live site (text, H1s, schema, numbers)",AUTO+HUMAN,SKIP,SKIP,not run: 29 (29_live_vs_dev),content,0,0,0,Open the Content parity sheet; get an SEO sign-off for changed titles / H1s.,29_live_vs_dev
+MAP-05,Sitemap and content,No test / demo / duplicate pages published,AUTO,SKIP,SKIP,"not run: 14 (14_content), 29 (29_live_vs_dev)",content,0,0,0,,"14_content, 29_live_vs_dev"
+MAP-06,Sitemap and content,"No lorem ipsum, placeholder or debug text",AUTO,SKIP,SKIP,"not run: 13 (13_nextjs), 14 (14_content)",content,0,0,0,,"13_nextjs, 14_content"
+MAP-07,Sitemap and content,No empty / very thin pages,AUTO,SKIP,SKIP,not run: 14 (14_content),content,0,0,0,,14_content
+MAP-08,Sitemap and content,Articles show author and dates,AUTO,SKIP,SKIP,not run: 14 (14_content),content,0,0,0,,14_content
+NAP-01,Business info,"Phone number is the confirmed number everywhere (header, footer, content, schema)",AUTO,SKIP,SKIP,not run: 22 (22_business_info),dev,0,0,0,,22_business_info
+NAP-02,Business info,Every written phone number is a tel: link that dials the number shown,AUTO,SKIP,SKIP,not run: 22 (22_business_info),dev,0,0,0,,22_business_info
+NAP-03,Business info,Phone is visible and tappable in the desktop and mobile header,AUTO,SKIP,SKIP,"not run: 22 (22_business_info), 24 (24_navigation)",dev,0,0,0,,"22_business_info, 24_navigation"
+NAP-04,Business info,Email addresses are correct and mailto: links match the address shown,AUTO,SKIP,SKIP,not run: 22 (22_business_info),dev,0,0,0,,22_business_info
+NAP-05,Business info,Address is the same on every page (and matches the confirmed / Google listing),AUTO+HUMAN,SKIP,SKIP,not run: 22 (22_business_info),client,0,0,0,Compare the address with the Google Business Profile.,22_business_info
+NAP-06,Business info,"Business name is written the same way everywhere (schema, og:site_name, titles)",AUTO,SKIP,SKIP,not run: 22 (22_business_info),dev,0,0,0,,22_business_info
+NAV-01,Navigation and links,"No broken internal links, pages or redirect loops",AUTO,SKIP,SKIP,"not run: 01 (01_sitemap), 05 (05_links), 09 (09_technical)",dev,0,0,0,,"01_sitemap, 05_links, 09_technical"
+NAV-02,Navigation and links,No broken external links / third-party URLs,AUTO,SKIP,SKIP,"not run: 05 (05_links), 19 (19_third_party_urls)",content,0,0,0,,"05_links, 19_third_party_urls"
+NAV-03,Navigation and links,Desktop dropdown menus open and their links work,AUTO,SKIP,SKIP,not run: 24 (24_navigation),dev,0,0,0,,24_navigation
+NAV-04,Navigation and links,"Mobile menu: button on screen and tappable, opens, links not cut off, closes",AUTO,SKIP,SKIP,"not run: 15 (15_mobile), 24 (24_navigation)",dev,0,0,0,,"15_mobile, 24_navigation"
+NAV-05,Navigation and links,Mobile menu offers the same pages as the desktop menu,AUTO,SKIP,SKIP,not run: 24 (24_navigation),dev,0,0,0,,24_navigation
+NAV-06,Navigation and links,"Social links point to real, working profiles",AUTO+HUMAN,SKIP,SKIP,not run: 22 (22_business_info),client,0,0,0,Confirm the profile list with the client (qa_config.json social_profiles).,22_business_info
+NAV-07,Navigation and links,"Every page is reachable by links (no orphans, not only via JS menus)",AUTO,SKIP,SKIP,not run: 05 (05_links),seo,0,0,0,,05_links
+NAV-08,Navigation and links,Hub pages link their detail pages; breadcrumbs on nested pages,AUTO,SKIP,SKIP,not run: 05 (05_links),seo,0,0,0,,05_links
+NAV-09,Navigation and links,Links have descriptive text,AUTO,SKIP,SKIP,"not run: 05 (05_links), 12b (12b_lighthouse)",content,0,0,0,,"05_links, 12b_lighthouse"
+NAV-10,Navigation and links,"No leftover / forbidden terms (old vendor, old brand, staging names)",AUTO,SKIP,SKIP,not run: 26 (26_text_quality),content,0,0,0,,26_text_quality
+NAV-11,Navigation and links,"Internal URLs are lowercase, hyphenated and consistent",AUTO,SKIP,SKIP,"not run: 02 (02_page_seo), 09 (09_technical)",dev,0,0,0,,"02_page_seo, 09_technical"
+PERF-01,Performance and accessibility,"Lighthouse: no failing scores (Performance, A11y, BP, SEO)",AUTO,SKIP,SKIP,not run: 12b (12b_lighthouse),dev,0,0,0,,12b_lighthouse
+PERF-02,Performance and accessibility,"Core Web Vitals pass on a throttled phone (LCP, INP, CLS)",AUTO,SKIP,SKIP,not run: 12a (12a_cwv),dev,0,0,0,,12a_cwv
+PERF-03,Performance and accessibility,Above-the-fold images not lazy; below-the-fold images lazy,AUTO,SKIP,SKIP,not run: 04 (04_images),dev,0,0,0,,04_images
+PERF-04,Performance and accessibility,"Images optimised (format, size, dimensions, srcset)",AUTO,SKIP,SKIP,"not run: 04 (04_images), 13 (13_nextjs)",dev,0,0,0,,"04_images, 13_nextjs"
+PERF-05,Performance and accessibility,"Page weight, JavaScript, compression and caching within budget",AUTO,SKIP,SKIP,not run: 12 (12_performance),dev,0,0,0,,12_performance
+SEC-01,Security,"HTTPS everywhere: valid certificate, HTTP -> HTTPS, HSTS, no mixed content",AUTO,SKIP,SKIP,not run: 11 (11_security),dev,0,0,0,,11_security
+SEC-02,Security,"Security headers set (CSP, X-Content-Type-Options, frame protection ...)",AUTO,SKIP,SKIP,not run: 11 (11_security),dev,0,0,0,,11_security
+SEC-03,Security,"No exposed files, source maps, server banners or insecure cookies",AUTO,SKIP,SKIP,not run: 11 (11_security),dev,0,0,0,,11_security
+SEO-01,SEO,Every page has a unique title and meta description of the right length,AUTO,SKIP,SKIP,not run: 02 (02_page_seo),seo,0,0,0,,02_page_seo
+SEO-02,SEO,"Titles / descriptions / social tags have no odd characters (&amp;, &#39;, mojibake)",AUTO,SKIP,SKIP,not run: 26 (26_text_quality),content,0,0,0,,26_text_quality
+SEO-04,SEO,Exactly one meaningful H1 per page; headings in order,AUTO,SKIP,SKIP,"not run: 02 (02_page_seo), 03 (03_headings), 17 (17_heading_order)",seo,0,0,0,,"02_page_seo, 03_headings, 17_heading_order"
+SEO-05,SEO,"Canonical tag on every page points to itself (absolute, 200)",AUTO,SKIP,SKIP,"not run: 09 (09_technical), 13 (13_nextjs)",dev,0,0,0,,"09_technical, 13_nextjs"
+SEO-06,SEO,No page is noindex / nofollow by mistake; robots.txt allows the site,AUTO,SKIP,SKIP,"not run: 01 (01_sitemap), 09 (09_technical)",seo,0,0,0,,"01_sitemap, 09_technical"
+SEO-07,SEO,"JSON-LD parses, has the expected types and valid values / URLs",AUTO,SKIP,SKIP,"not run: 07 (07_schema), 27 (27_assets)",dev,0,0,0,,"07_schema, 27_assets"
+SEO-08,SEO,"Expected schema type per page (Organization, Service, BlogPosting, Breadcrumbs ...)",AUTO,SKIP,SKIP,not run: 07 (07_schema),seo,0,0,0,,07_schema
+SEO-09,SEO,"Favicon, apple-touch-icon, manifest icons and theme-color set",AUTO,SKIP,SKIP,"not run: 13 (13_nextjs), 27 (27_assets)",dev,0,0,0,,"13_nextjs, 27_assets"
+SEO-10,SEO,Social share (Open Graph / Twitter) tags complete; share image works (1200x630),AUTO,SKIP,SKIP,not run: 06 (06_social),seo,0,0,0,,06_social
+SEO-11,SEO,Titles and H1s are not ALL CAPS / all lowercase / padded with spaces,AUTO,SKIP,SKIP,not run: 26 (26_text_quality),content,0,0,0,,26_text_quality
+SEO-12,SEO,Every content image has accurate alt text,AUTO+HUMAN,SKIP,SKIP,"not run: 04 (04_images), 18 (18_image_alt)",content,0,0,0,Skim the Image alt sheet: alt texts must describe this client's images (no other company's names).,"04_images, 18_image_alt"
+SEO-14,SEO,Language versions / hreflang correct (multi-language sites),AUTO,SKIP,SKIP,not run: 08 (08_hreflang),seo,0,0,0,,08_hreflang
+VIS-01,Visual,"Mobile layouts: no horizontal scrolling, readable text, usable inputs",AUTO,SKIP,SKIP,not run: 15 (15_mobile),dev,0,0,0,,15_mobile
+VIS-03,Visual,Other browsers: Firefox and Safari (WebKit) render without errors,AUTO+HUMAN,SKIP,SKIP,not run: 24 (24_navigation),dev,0,0,0,playwright install firefox webkit  enables the automatic part; still check real Safari / iOS once.,24_navigation
+VIS-06,Visual,Live vs dev side-by-side reviewed (visual diff / recording),AUTO+HUMAN,SKIP,SKIP,not run: 29 (29_live_vs_dev),qa,0,0,0,Run 29 with --visual and look at the *_diff.png images; record a comparison video if required.,29_live_vs_dev
+CTX-01,Project context,Brief / scope read; every requested page and feature is built,HUMAN,HUMAN,HUMAN,,qa,,,,Compare the project brief / ticket with the site; post open questions on the ticket.,
+CTX-02,Project context,Ticket comments and dev notes read; requested changes are done,HUMAN,HUMAN,HUMAN,,qa,,,,Read every comment on the ticket / card and check each request on the site.,
+CTX-03,Project context,Design (Figma) comments read; the site follows the approved design,HUMAN,HUMAN,HUMAN,,qa,,,,"Open the Figma file, read the comment threads, compare the main pages with the frames.",
+CTX-04,Project context,Open questions for the client listed and sent,HUMAN,HUMAN,HUMAN,,qa,,,,Copy the 'Questions for the client' block of this report into the ticket.,
+FRM-05,Forms,A real test submission arrives with clean field names; thank-you page shows,HUMAN,HUMAN,HUMAN,,qa,,,,Submit each form once with test data; check the email / CRM and the redirect.,
+MAP-09,Sitemap and content,Testimonials / reviews up to date (newest 5-star reviews added),HUMAN,HUMAN,HUMAN,,client,,,,Compare the Google reviews with the reviews on the site; list new ones for the client.,
+NAP-07,Business info,Phone numbers / addresses inside images and videos match,HUMAN,HUMAN,HUMAN,,qa,,,,Watch the videos and look at banner images for old phone numbers or addresses.,
+SEO-03,SEO,"Home page title, description and H1 approved by SEO",HUMAN,HUMAN,HUMAN,,seo,,,,Send the home title / description / H1 (Page SEO report) to SEO; record the sign-off with qa.py mark.,
+VIS-02,Visual,Screenshots reviewed: dev matches the approved design,HUMAN,HUMAN,HUMAN,,qa,,,,Open the screenshots folder of the Navigation report (desktop + phone) next to the Figma frames.,
+VIS-04,Visual,Animations are smooth and not too slow while scrolling,HUMAN,HUMAN,HUMAN,,qa,,,,Scroll every main page on a phone and a laptop.,
+VIS-05,Visual,Mobile theme colour checked on Android Chrome / iPhone Safari,HUMAN,PASS,HUMAN,PASS by QA on 2026-10-08 14:22: Checked on Pixel 8 + iPhone 15,qa,,,,Open the site on a phone and look at the browser bar colour.,

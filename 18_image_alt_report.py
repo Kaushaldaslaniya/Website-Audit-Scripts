@@ -58,6 +58,7 @@ def analyze(loc):
 print(f"Checking image alt text on {len(pages)} pages ...")
 rows = run_parallel(analyze, pages, args.workers)
 rows.sort(key=lambda r: ({"Error": 0, "Warning": 1}.get(r[5], 2), r[0]))
+issue_rows.sort(key=lambda r: (r[0], r[1]))
 audit.note("Images checked", sum(r[1] for r in rows if isinstance(r[1], int)))
 audit.note("Pages with every image described", f"{sum(1 for r in rows if r[5] == 'Correct')} of {len(rows)}")
 audit.sheet("Image Alt Summary", ["URL", "Total Images", "Images With Alt", "Missing Alt", "Empty Alt", "Status", "Issue"],

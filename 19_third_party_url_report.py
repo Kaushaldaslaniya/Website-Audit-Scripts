@@ -27,8 +27,10 @@ BLOCKED = (401, 403, 429, 999)
 args = parse_args("Third-party URL report", lambda ap: ap.add_argument("--timeout", type=int, default=20))
 site, urls = load_site(args)
 pages = select_pages(urls, args)
+import threading
 audit = Audit("19_third_party_urls", "Third Party URL Report", "Link Health", site)
 used = defaultdict(list)   # third-party URL -> [(page, type, rel)]
+used_lock = threading.Lock()
 
 
 def collect(loc):
@@ -57,7 +59,8 @@ def collect(loc):
                         kind = "Stylesheet" if "stylesheet" in rel else f"Link ({rel or 'no rel'})"
                     if (full, kind) not in seen:
                         seen.add((full, kind))
-                        used[full].append((loc, kind))
+                        with used_lock:
+                            used[full].append((loc, kind))
 
 
 def check(url):

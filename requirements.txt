@@ -5,3 +5,10 @@ openpyxl>=3.1
 pillow>=10.0
 playwright>=1.44
 axe-playwright-python>=0.1.4
+# QA checks 22-30 (all free / offline)
+jsonschema>=4.20        # 27: JSON-LD value formats
+pyspellchecker>=0.8     # 31: ranks spelling suggestions by word frequency
+language-tool-python>=2.8   # 31: LanguageTool grammar / spelling (downloads LanguageTool once, needs Java 17+)
+tldextract>=5.0         # 22: social-network domains
+bandit>=1.7             # 28: security scan of the Python scripts
+# optional: pymupdf      # 27: title / text layer of linked PDFs  (pip install pymupdf)

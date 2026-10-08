@@ -26,7 +26,7 @@ ISO_LANG = set("aa ab af ak am an ar as av ay az ba be bg bh bi bm bn bo br bs c
                "xh yi yo za zh zu".split())
 
 args = parse_args("hreflang checker", lambda ap: ap.add_argument("--languages", default="en,it,de,fr,es"))
-LANGS = [l.strip() for l in args.languages.split(",") if l.strip()]
+LANGS = [l.strip() for l in args.languages.split(",") if l.strip()] or ["en"]
 DEFAULT_LANG = LANGS[0]
 site, urls = load_site(args)
 pages = select_pages(urls, args)
@@ -43,7 +43,7 @@ def alternates_of(soup, page_url):
 
 
 def fingerprint(soup):
-    return hashlib.md5(main_text(soup).lower().encode()).hexdigest()
+    return hashlib.md5(main_text(soup).lower().encode(), usedforsecurity=False).hexdigest()
 
 
 def check(loc):

@@ -127,7 +127,7 @@ def run_time():
     return _RUN_TIME
 
 
-FORMAT_DIRS = {"xlsx": "excel", "json": "json", "csv": "csv"}
+FORMAT_DIRS = {"xlsx": "excel", "json": "json", "csv": "csv", "md": "markdown", "html": "html"}
 
 
 def report_path(name, ext="xlsx"):
@@ -137,7 +137,7 @@ def report_path(name, ext="xlsx"):
     return folder / f"{name}_{run_time()}.{ext}"
 
 
-REPORT_FILE = r"_\d\d-\d\d-\d\d\.(xlsx|json|csv)"
+REPORT_FILE = r"_\d\d-\d\d-\d\d(\.(xlsx|json|csv|md|html))?"   # a file, or a screenshots folder
 
 
 def _prune_empty_dirs():
@@ -150,11 +150,12 @@ def remove_old_reports(name):
     """Delete earlier Excel / JSON / CSV files of this report (any date); keeps the current run's files."""
     if not REPORT_ROOT.exists():
         return 0
+    import shutil
     removed = 0
     for f in REPORT_ROOT.glob(f"*/*/{name}_*"):
-        current = f.parent.parent.name == run_date() and f.stem == f"{name}_{run_time()}"
-        if f.is_file() and re.fullmatch(re.escape(name) + REPORT_FILE, f.name) and not current:
-            f.unlink()
+        current = f.parent.parent.name == run_date() and f.name.split(".")[0] == f"{name}_{run_time()}"
+        if re.fullmatch(re.escape(name) + REPORT_FILE, f.name) and not current:
+            shutil.rmtree(f) if f.is_dir() else f.unlink()
             removed += 1
     _prune_empty_dirs()
     if removed:
@@ -169,6 +170,34 @@ def clear_reports():
         for item in REPORT_ROOT.iterdir():
             shutil.rmtree(item) if item.is_dir() else item.unlink()
     ensure_report_root()
+
+
+def screenshot_dir(name):
+    """report/<date>/screenshots/<name>_<time>/ - evidence images of a report (replaced with the report)."""
+    folder = ensure_report_root() / run_date() / "screenshots" / f"{name}_{run_time()}"
+    folder.mkdir(parents=True, exist_ok=True)
+    return folder
+
+
+# Free command-line tools downloaded on first use (W3C Nu validator ...) - outside the project and report/
+TOOLS_DIR = Path.home() / ".cache" / "website-audit-tools"
+
+# Project expectations used by the QA checks (confirmed phone, live URL ...) - see README section "QA config"
+QA_CONFIG_FILE = SCRIPTS_DIR / "qa_config.json"
+
+
+
+def qa_config():
+    """py files/qa_config.json merged over the defaults; keys starting with '_' are comments."""
+    cfg = {"company": "", "phones": [], "emails": [], "address": "", "live_url": "", "legal_site": False,
+           "forbidden_terms": [], "required_footer_links": ["privacy", "terms"], "social_profiles": [],
+           "spelling_ignore": [], "nav_expected": []}
+    try:
+        data = json.loads(QA_CONFIG_FILE.read_text(encoding="utf-8"))
+        cfg.update({k: v for k, v in data.items() if not k.startswith("_")})
+    except (OSError, ValueError):
+        pass
+    return cfg
 
 
 def rel_path(path):
@@ -716,28 +745,39 @@ def crawl_cache_path():
 def _load_cached_crawl(site, args):
     max_age = float(os.environ.get("SEO_CRAWL_MAX_AGE", 1800))
     exact = CRAWL_CACHE / f"crawl_{run_date()}_{run_time()}.json"
-    candidates = [exact] if exact.exists() else []
-    if not os.environ.get("SEO_RUN_TIME"):   # run on its own: any recent crawl of this server
-        candidates += sorted(CRAWL_CACHE.glob("crawl_*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
-    for old in CRAWL_CACHE.glob("crawl_*.json"):   # tidy up crawls older than a day
+    now = time.time()
+    for old in list(CRAWL_CACHE.glob("crawl_*.json")):   # tidy up crawls older than a day
         try:
-            if time.time() - old.stat().st_mtime > 86400:
+            if now - old.stat().st_mtime > 86400:
                 old.unlink()
         except OSError:
             pass
+    candidates = [exact] if exact.exists() else []
+    if not os.environ.get("SEO_RUN_TIME"):   # run on its own: any recent crawl of this server
+        valid = []
+        for p in CRAWL_CACHE.glob("crawl_*.json"):
+            try:
+                valid.append((p.stat().st_mtime, p))
+            except OSError:
+                pass
+        candidates += [p for _, p in sorted(valid, reverse=True)]
     for path in candidates:
-        if path != exact and time.time() - path.stat().st_mtime > max_age:
-            continue
         try:
-            data = json.loads(path.read_text())
+            mtime = path.stat().st_mtime
+            if path != exact and now - mtime > max_age:
+                continue
+            data = json.loads(path.read_text(encoding="utf-8"))
         except (ValueError, OSError):
             continue
         st = data.get("stats", {})
         if data.get("base") == site.base and st.get("max_pages") == args.max_pages \
                 and st.get("respect_robots") == (not args.ignore_robots) \
                 and (st.get("js_discovery", False) or not want_js_discovery(args)):
-            print(f"Using the crawl from {datetime.fromtimestamp(path.stat().st_mtime):%H:%M:%S} "
-                  f"({st.get('html_pages')} HTML pages)")
+            try:
+                ts_str = f"{datetime.fromtimestamp(mtime):%H:%M:%S}"
+            except Exception:
+                ts_str = "cached"
+            print(f"Using the crawl from {ts_str} ({st.get('html_pages')} HTML pages)")
             return data
     return None
 
@@ -849,6 +889,45 @@ def main_text(soup):
     for t in main.find_all(["script", "style", "noscript", "svg", "template"]):
         t.decompose()
     return text_of(main)
+
+
+TEXT_BLOCK_TAGS = ["h1", "h2", "h3", "h4", "h5", "h6", "p", "li", "button", "a", "td", "th", "label", "figcaption",
+                   "blockquote", "dt", "dd", "span", "summary", "caption", "div"]
+_BLOCK_PARENTS = ["p", "li", "h1", "h2", "h3", "h4", "h5", "h6", "td", "th", "dd", "dt", "blockquote", "figcaption",
+                  "button", "a", "label", "summary", "caption", "div"]
+_NO_TEXT = ("script", "style", "noscript", "template", "svg", "code", "pre", "kbd", "samp")
+
+
+def rendered_text(el):
+    """Text as the browser shows it: child elements are NOT separated by an extra space (text_of() adds one, which
+    turns "Semicolon<span>.</span>" into "Semicolon ."), <br> becomes a space, whitespace is collapsed."""
+    parts = []
+    for node in el.descendants:
+        if getattr(node, "name", None) == "br":
+            parts.append(" ")
+        elif isinstance(node, str) and not node.find_parent(_NO_TEXT) and type(node).__name__ == "NavigableString":
+            parts.append(str(node))
+    return " ".join("".join(parts).split())
+
+
+def text_blocks(soup):
+    """Visible text blocks of a page -> [(element, text, zone)], each piece of text once: leaf-ish blocks (headings,
+    paragraphs, list items, cells, buttons, divs without block children ...), inline elements only when they are not
+    inside such a block,
+    nothing inside code / svg / scripts. zone = header | footer | content."""
+    out = []
+    body = soup.body or soup
+    for el in body.find_all(TEXT_BLOCK_TAGS):
+        if el.find_parent(_NO_TEXT) or el.find(["p", "li", "h1", "h2", "h3", "h4", "h5", "h6", "div"]):
+            continue
+        if el.name in ("a", "span", "button", "label", "div") and el.find_parent(_BLOCK_PARENTS):
+            continue
+        t = rendered_text(el)
+        if not t:
+            continue
+        zone = "header" if el.find_parent(["header", "nav"]) else "footer" if el.find_parent("footer") else "content"
+        out.append((el, t, zone))
+    return out
 
 
 STOPWORDS = set("a an and are as at be by for from how in into is it its of on or our the to we with your you "
@@ -1145,6 +1224,13 @@ class Audit:
     def site_issue(self, severity, category, check, detail="", **kw):
         self.add(SITE_WIDE, severity, category, check, detail, **kw)
 
+    def not_checked(self, category, what, reason, how=""):
+        """Record that a check could not run (tool missing, option off ...). The QA checklist shows SKIP for it
+        instead of a misleading PASS. Info severity: no score impact."""
+        self.add(SITE_WIDE, INFO, category, f"Not checked: {what}", current=reason,
+                 expected="the check runs", fix=how or "See the reason in Current value.",
+                 description="This check did not run, so its result is unknown (not a pass).")
+
     def checked(self, url):
         with self._lock:
             self.pages.add(url)
@@ -1152,8 +1238,10 @@ class Audit:
     def note(self, label, value):
         self.notes.append((label, value))
 
-    def sheet(self, name, headers, rows, widths=None, severity_col=None):
-        self.sheets.append((name, headers, rows, widths, severity_col))
+    def sheet(self, name, headers, rows, widths=None, severity_col=None, fills=None):
+        """Extra Excel sheet (also saved in the JSON 'data'). fills: {1-based column: "RRGGBB" for every row, or
+        {cell value: "RRGGBB"}} - e.g. a PASS / WARN / FAIL status column, see STATUS_COLORS."""
+        self.sheets.append((name, headers, rows, widths, severity_col, fills))
 
     # scoring ---------------------------------------------------------------
     def _page_deductions(self):
@@ -1198,7 +1286,7 @@ class Audit:
             i["in_sitemap"] = ("yes" if rec.get("in_sitemap") else "no") if rec else ""
             i["report"] = self.title
             raw = "|".join(str(i[k]) for k in ("url", "issue", "current_value", "element"))
-            i["id"] = f"{self.key}-{hashlib.md5((self.key + raw).encode()).hexdigest()[:10]}"
+            i["id"] = f"{self.key}-{hashlib.md5((self.key + raw).encode(), usedforsecurity=False).hexdigest()[:10]}"
         url_rank = lambda u: (u == SITE_WIDE, not u.startswith("http"), u)
         self.issues.sort(key=lambda i: (url_rank(i["url"]), SEVERITY_ORDER.get(i["severity"], 9), i["category"],
                                         i["issue"]))
@@ -1314,8 +1402,8 @@ class Audit:
             for col, sev in ((6, CRITICAL), (7, IMPORTANT), (8, OPTIMIZATION)):
                 if uws.cell(row=row, column=col).value:
                     uws.cell(row=row, column=col).fill = FILLS[sev]
-        for name_, headers, rows, widths, severity_col in self.sheets:
-            write_sheet(wb.create_sheet(name_[:31]), headers, rows, widths, severity_col)
+        for name_, headers, rows, widths, severity_col, fills in self.sheets:
+            write_sheet(wb.create_sheet(name_[:31]), headers, rows, widths, severity_col, fills)
         wb.save(path)
 
         # ---------------- JSON
@@ -1331,7 +1419,7 @@ class Audit:
             "issue_types": issue_types,
             "urls": [r for r in url_rows if r["url"] != SITE_WIDE],
             "site_wide_issues": next((r["issues"] for r in url_rows if r["url"] == SITE_WIDE), []),
-            "data": {n: [dict(zip(h, (_jsonable(v) for v in row))) for row in rows] for n, h, rows, _, _ in self.sheets},
+            "data": {n: [dict(zip(h, (_jsonable(v) for v in row))) for row in rows] for n, h, rows, *_ in self.sheets},
         }
         json_path.write_text(json.dumps(report, indent=1, ensure_ascii=False, default=str))
         write_csv(csv_path, [h for _, h, _ in ISSUE_COLUMNS], ([i.get(k, "") for k, _, _ in ISSUE_COLUMNS]
@@ -1375,7 +1463,19 @@ def write_csv(path, headers, rows):
             w.writerow(["" if v is None else v for v in r])
 
 
-def write_sheet(ws, headers, rows, widths=None, severity_col=None):
+# light backgrounds with dark text (readable): status values and "wrong" / "expected" columns
+STATUS_COLORS = {"PASS": "C6EFCE", "FAIL": "FFC7CE", "WARN": "FFEB9C", "SKIP": "E7E6E6", "HUMAN": "E4DFEC"}
+WRONG_COLOR, EXPECTED_COLOR = "FFC7CE", "C6EFCE"
+_FILL_CACHE = {}
+
+
+def _fill(color):
+    if color not in _FILL_CACHE:
+        _FILL_CACHE[color] = PatternFill(fill_type="solid", start_color=color)
+    return _FILL_CACHE[color]
+
+
+def write_sheet(ws, headers, rows, widths=None, severity_col=None, fills=None):
     ws.append(list(headers))
     for cell in ws[1]:
         cell.font = Font(bold=True, color="FFFFFF")
@@ -1385,14 +1485,20 @@ def write_sheet(ws, headers, rows, widths=None, severity_col=None):
         if severity_col:
             cell = ws.cell(row=ws.max_row, column=severity_col)
             cell.fill = FILLS.get(cell.value, FILLS["ok"])
+        for col, rule in (fills or {}).items():
+            cell = ws.cell(row=ws.max_row, column=col)
+            color = rule if isinstance(rule, str) else rule.get(cell.value)
+            if color and cell.value not in (None, ""):
+                cell.fill = _fill(color)
     for i, w in enumerate(widths or [], 1):
         ws.column_dimensions[get_column_letter(i)].width = w
     ws.freeze_panes = "A2"
     if ws.max_row > 1:
         ws.auto_filter.ref = ws.dimensions
+    top = Alignment(vertical="top")   # one shared style object (a new one per cell is slow on big sheets)
     for row in ws.iter_rows(min_row=2):
         for cell in row:
-            cell.alignment = Alignment(vertical="top")
+            cell.alignment = top
 
 
 # ---------------------------------------------------------------------------

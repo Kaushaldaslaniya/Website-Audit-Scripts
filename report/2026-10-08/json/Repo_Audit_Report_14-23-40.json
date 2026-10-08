@@ -1,0 +1,3956 @@
+{
+ "report": {
+  "key": "28_repo",
+  "title": "Repo Audit Report",
+  "category": "Repository",
+  "audited_server": "http://localhost:3000",
+  "generated": "2026-10-08T14:36:16",
+  "duration_seconds": 11,
+  "score": 97.2,
+  "grade": "Excellent",
+  "pages_checked": 0,
+  "counts": {
+   "Critical": 0,
+   "Important": 21,
+   "Optimization": 95,
+   "Info": 1
+  },
+  "total_issues": 117,
+  "crawl": {},
+  "run_date": "2026-10-08",
+  "run_time": "14-23-40",
+  "excel": "py files/report/2026-10-08/excel/Repo_Audit_Report_14-23-40.xlsx",
+  "csv": "py files/report/2026-10-08/csv/Repo_Audit_Report_14-23-40.csv"
+ },
+ "notes": {
+  "Files in git": 1590
+ },
+ "issue_types": [
+  {
+   "issue": "Vulnerable dependency (high)",
+   "severity": "Important",
+   "priority": "P2 - fix soon",
+   "category": "Packages",
+   "occurrences": 17,
+   "description": "",
+   "expected_value": "",
+   "recommended_fix": "npm audit fix (or upgrade the package that pulls it in).",
+   "pages": 1
+  },
+  {
+   "issue": "ESLint error: react/no-unescaped-entities",
+   "severity": "Important",
+   "priority": "P2 - fix soon",
+   "category": "Code",
+   "occurrences": 2,
+   "description": "",
+   "expected_value": "",
+   "recommended_fix": "Fix the code at the line shown (npm run lint).",
+   "pages": 1
+  },
+  {
+   "issue": "Vulnerable dependency (critical)",
+   "severity": "Important",
+   "priority": "P2 - fix soon",
+   "category": "Packages",
+   "occurrences": 1,
+   "description": "",
+   "expected_value": "",
+   "recommended_fix": "npm audit fix (or upgrade the package that pulls it in).",
+   "pages": 1
+  },
+  {
+   "issue": "ESLint error: @typescript-eslint/no-explicit-any",
+   "severity": "Important",
+   "priority": "P2 - fix soon",
+   "category": "Code",
+   "occurrences": 1,
+   "description": "",
+   "expected_value": "",
+   "recommended_fix": "Fix the code at the line shown (npm run lint).",
+   "pages": 1
+  },
+  {
+   "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+   "severity": "Optimization",
+   "priority": "P3 - improve",
+   "category": "Code",
+   "occurrences": 80,
+   "description": "",
+   "expected_value": "",
+   "recommended_fix": "Fix the code at the line shown (npm run lint).",
+   "pages": 31
+  },
+  {
+   "issue": "Bandit B314: blacklist",
+   "severity": "Optimization",
+   "priority": "P3 - improve",
+   "category": "Code",
+   "occurrences": 5,
+   "description": "",
+   "expected_value": "",
+   "recommended_fix": "See https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b313-b320-xml-bad-elementtree.",
+   "pages": 3
+  },
+  {
+   "issue": "ESLint warning: @next/next/no-img-element",
+   "severity": "Optimization",
+   "priority": "P3 - improve",
+   "category": "Code",
+   "occurrences": 3,
+   "description": "",
+   "expected_value": "",
+   "recommended_fix": "Fix the code at the line shown (npm run lint).",
+   "pages": 2
+  },
+  {
+   "issue": "Vulnerable dependency (moderate)",
+   "severity": "Optimization",
+   "priority": "P3 - improve",
+   "category": "Packages",
+   "occurrences": 3,
+   "description": "",
+   "expected_value": "",
+   "recommended_fix": "npm audit fix (or upgrade the package that pulls it in).",
+   "pages": 1
+  },
+  {
+   "issue": ".gitignore doesn't ignore __pycache__",
+   "severity": "Optimization",
+   "priority": "P3 - improve",
+   "category": "Git",
+   "occurrences": 1,
+   "description": "The repository setup is incomplete (ignored files, lockfile, env example).",
+   "expected_value": "__pycache__ or *.pyc or *.py[cod]",
+   "recommended_fix": "Add the missing rule / file.",
+   "pages": 1
+  },
+  {
+   "issue": "Build output / cache files committed",
+   "severity": "Optimization",
+   "priority": "P3 - improve",
+   "category": "Git",
+   "occurrences": 1,
+   "description": "",
+   "expected_value": "",
+   "recommended_fix": "git rm -r --cached the __pycache__ files and add __pycache__ to .gitignore.",
+   "pages": 1
+  },
+  {
+   "issue": "Bandit B610: django_extra_used",
+   "severity": "Optimization",
+   "priority": "P3 - improve",
+   "category": "Code",
+   "occurrences": 1,
+   "description": "",
+   "expected_value": "",
+   "recommended_fix": "See https://bandit.readthedocs.io/en/1.9.4/plugins/b610_django_extra_used.html.",
+   "pages": 1
+  },
+  {
+   "issue": "ESLint warning: react-hooks/exhaustive-deps",
+   "severity": "Optimization",
+   "priority": "P3 - improve",
+   "category": "Code",
+   "occurrences": 1,
+   "description": "",
+   "expected_value": "",
+   "recommended_fix": "Fix the code at the line shown (npm run lint).",
+   "pages": 1
+  },
+  {
+   "issue": "Not checked: production build",
+   "severity": "Info",
+   "priority": "P4 - for information",
+   "category": "Build",
+   "occurrences": 1,
+   "description": "This check did not run, so its result is unknown (not a pass).",
+   "expected_value": "the check runs",
+   "recommended_fix": "python \"py files/28_repo_audit.py\" --build   (or run_all.py --repo-build)",
+   "pages": 1
+  }
+ ],
+ "urls": [
+  {
+   "url": "file: .gitignore",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 1,
+    "Info": 0
+   },
+   "total_issues": 1,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Git",
+     "issue": ".gitignore doesn't ignore __pycache__",
+     "description": "The repository setup is incomplete (ignored files, lockfile, env example).",
+     "current_value": "(no rule)",
+     "expected_value": "__pycache__ or *.pyc or *.py[cod]",
+     "recommended_fix": "Add the missing rule / file.",
+     "element": "",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-864188454b"
+    }
+   ]
+  },
+  {
+   "url": "file: __pycache__/seo_report.cpython-314.pyc",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 1,
+    "Info": 0
+   },
+   "total_issues": 1,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Git",
+     "issue": "Build output / cache files committed",
+     "description": "",
+     "current_value": "27 __pycache__ file(s)",
+     "expected_value": "",
+     "recommended_fix": "git rm -r --cached the __pycache__ files and add __pycache__ to .gitignore.",
+     "element": "__pycache__/seo_report.cpython-314.pyc, py files/__pycache__/01_sitemap_checker.cpython-314.pyc, py files/__pycache__/02_page_seo_checker.cpython-314.pyc, py files/__pycache__/03_heading_checker.cpython-314.pyc, py files/__pycache__/04_image_seo_checker.cpython-314.pyc",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-c52e2c95e3"
+    }
+   ]
+  },
+  {
+   "url": "file: package.json",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 18,
+    "Optimization": 3,
+    "Info": 0
+   },
+   "total_issues": 21,
+   "issues": [
+    {
+     "severity": "Important",
+     "priority": "P2 - fix soon",
+     "category": "Packages",
+     "issue": "Vulnerable dependency (critical)",
+     "description": "",
+     "current_value": "next 9.3.4-canary.0 - 16.3.7",
+     "expected_value": "",
+     "recommended_fix": "npm audit fix (or upgrade the package that pulls it in).",
+     "element": "Next.js self-hosted applications vulnerable to DoS via Image Optimizer remotePatterns configuration; Next.js HTTP request deserialization can lead to DoS when using insecure React Server Components; N",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-dcfa10cab8"
+    },
+    {
+     "severity": "Important",
+     "priority": "P2 - fix soon",
+     "category": "Packages",
+     "issue": "Vulnerable dependency (high)",
+     "description": "",
+     "current_value": "@babel/plugin-transform-modules-systemjs 7.12.0 - 7.29.0",
+     "expected_value": "",
+     "recommended_fix": "npm audit fix (or upgrade the package that pulls it in).",
+     "element": "@babel/plugin-transform-modules-systemjs generates arbitrary code when compiling malicious input",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-028c1bc516"
+    },
+    {
+     "severity": "Important",
+     "priority": "P2 - fix soon",
+     "category": "Packages",
+     "issue": "Vulnerable dependency (high)",
+     "description": "",
+     "current_value": "@next/eslint-plugin-next >=14.3.0-canary.0",
+     "expected_value": "",
+     "recommended_fix": "npm audit fix (or upgrade the package that pulls it in).",
+     "element": "",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-7e43a2d8e4"
+    },
+    {
+     "severity": "Important",
+     "priority": "P2 - fix soon",
+     "category": "Packages",
+     "issue": "Vulnerable dependency (high)",
+     "description": "",
+     "current_value": "brace-expansion <=1.1.20 || 2.0.0 - 2.1.6",
+     "expected_value": "",
+     "recommended_fix": "npm audit fix (or upgrade the package that pulls it in).",
+     "element": "brace-expansion: Zero-step sequence causes process hang and memory exhaustion; brace-expansion: Zero-step sequence causes process hang and memory exhaustion; brace-expansion: DoS via exponential-time ",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-803c5761bf"
+    },
+    {
+     "severity": "Important",
+     "priority": "P2 - fix soon",
+     "category": "Packages",
+     "issue": "Vulnerable dependency (high)",
+     "description": "",
+     "current_value": "braces *",
+     "expected_value": "",
+     "recommended_fix": "npm audit fix (or upgrade the package that pulls it in).",
+     "element": "braces vulnerable to stack-exhaustion denial of service through deeply nested patterns",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-a1238001a9"
+    },
+    {
+     "severity": "Important",
+     "priority": "P2 - fix soon",
+     "category": "Packages",
+     "issue": "Vulnerable dependency (high)",
+     "description": "",
+     "current_value": "browserslist <=4.28.6",
+     "expected_value": "",
+     "recommended_fix": "npm audit fix (or upgrade the package that pulls it in).",
+     "element": "Browserslist: Unbounded memory growth (no cache eviction) via distinct query results, leading to eventual OOM; Browserslist: Uncaught crash / prototype write via untrusted browserslist-stats.json cust",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-098245e03a"
+    },
+    {
+     "severity": "Important",
+     "priority": "P2 - fix soon",
+     "category": "Packages",
+     "issue": "Vulnerable dependency (high)",
+     "description": "",
+     "current_value": "eslint-config-next >=14.3.0-canary.0",
+     "expected_value": "",
+     "recommended_fix": "npm audit fix (or upgrade the package that pulls it in).",
+     "element": "",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-731a6846ff"
+    },
+    {
+     "severity": "Important",
+     "priority": "P2 - fix soon",
+     "category": "Packages",
+     "issue": "Vulnerable dependency (high)",
+     "description": "",
+     "current_value": "fast-glob *",
+     "expected_value": "",
+     "recommended_fix": "npm audit fix (or upgrade the package that pulls it in).",
+     "element": "",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-8a92a0bb9a"
+    },
+    {
+     "severity": "Important",
+     "priority": "P2 - fix soon",
+     "category": "Packages",
+     "issue": "Vulnerable dependency (high)",
+     "description": "",
+     "current_value": "flatted <=3.4.1",
+     "expected_value": "",
+     "recommended_fix": "npm audit fix (or upgrade the package that pulls it in).",
+     "element": "flatted vulnerable to unbounded recursion DoS in parse() revive phase; Prototype Pollution via parse() in NodeJS flatted",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-93bafda0ba"
+    },
+    {
+     "severity": "Important",
+     "priority": "P2 - fix soon",
+     "category": "Packages",
+     "issue": "Vulnerable dependency (high)",
+     "description": "",
+     "current_value": "js-yaml 4.0.0 - 4.3.1",
+     "expected_value": "",
+     "recommended_fix": "npm audit fix (or upgrade the package that pulls it in).",
+     "element": "JS-YAML: Quadratic-complexity DoS in merge key handling via repeated aliases; js-yaml: YAML merge-key chains can force quadratic CPU consumption; JS-YAML: Quadratic CPU consumption in !!omap resolutio",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-f53d5a26c8"
+    },
+    {
+     "severity": "Important",
+     "priority": "P2 - fix soon",
+     "category": "Packages",
+     "issue": "Vulnerable dependency (high)",
+     "description": "",
+     "current_value": "micromatch >=0.2.0",
+     "expected_value": "",
+     "recommended_fix": "npm audit fix (or upgrade the package that pulls it in).",
+     "element": "",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-b18029c87b"
+    },
+    {
+     "severity": "Important",
+     "priority": "P2 - fix soon",
+     "category": "Packages",
+     "issue": "Vulnerable dependency (high)",
+     "description": "",
+     "current_value": "minimatch <=3.1.3 || 9.0.0 - 9.0.6",
+     "expected_value": "",
+     "recommended_fix": "npm audit fix (or upgrade the package that pulls it in).",
+     "element": "minimatch has a ReDoS via repeated wildcards with non-matching literal in pattern; minimatch has a ReDoS via repeated wildcards with non-matching literal in pattern; minimatch has ReDoS: matchOne() co",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-3681e52a01"
+    },
+    {
+     "severity": "Important",
+     "priority": "P2 - fix soon",
+     "category": "Packages",
+     "issue": "Vulnerable dependency (high)",
+     "description": "",
+     "current_value": "nanoid <=3.3.17",
+     "expected_value": "",
+     "recommended_fix": "npm audit fix (or upgrade the package that pulls it in).",
+     "element": "nanoid: non-secure generators can loop indefinitely with negative size; nanoid: custom generators can loop indefinitely when size is zero; nanoid: Integer Overflow or Wraparound",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-a03cc84193"
+    },
+    {
+     "severity": "Important",
+     "priority": "P2 - fix soon",
+     "category": "Packages",
+     "issue": "Vulnerable dependency (high)",
+     "description": "",
+     "current_value": "picomatch <=2.3.1 || 4.0.0 - 4.0.3",
+     "expected_value": "",
+     "recommended_fix": "npm audit fix (or upgrade the package that pulls it in).",
+     "element": "Picomatch: Method Injection in POSIX Character Classes causes incorrect Glob Matching; Picomatch: Method Injection in POSIX Character Classes causes incorrect Glob Matching; Picomatch has a ReDoS vuln",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-c05a5a2d15"
+    },
+    {
+     "severity": "Important",
+     "priority": "P2 - fix soon",
+     "category": "Packages",
+     "issue": "Vulnerable dependency (high)",
+     "description": "",
+     "current_value": "postcss <=8.5.22",
+     "expected_value": "",
+     "recommended_fix": "npm audit fix (or upgrade the package that pulls it in).",
+     "element": "PostCSS has XSS via Unescaped </style> in its CSS Stringify Output; PostCSS: Arbitrary file read and information disclosure via attacker-controlled sourceMappingURL in CSS comments; PostCSS: incomplet",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-9fa5ae3fa8"
+    },
+    {
+     "severity": "Important",
+     "priority": "P2 - fix soon",
+     "category": "Packages",
+     "issue": "Vulnerable dependency (high)",
+     "description": "",
+     "current_value": "sharp <=0.35.5-rc.1",
+     "expected_value": "",
+     "recommended_fix": "npm audit fix (or upgrade the package that pulls it in).",
+     "element": "sharp inherited vulnerabilities in libvips: CVE-2026-33327, CVE-2026-33328, CVE-2026-35590, CVE-2026-35591; sharp: Vulnerabilities in libheif: GHSA-g89c-p67h-r497 and GHSA-2jg2-4ch7-h545; sharp : Vuln",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-8d4f4fbe8b"
+    },
+    {
+     "severity": "Important",
+     "priority": "P2 - fix soon",
+     "category": "Packages",
+     "issue": "Vulnerable dependency (high)",
+     "description": "",
+     "current_value": "source-map-js 1.0.0 - 1.2.1",
+     "expected_value": "",
+     "recommended_fix": "npm audit fix (or upgrade the package that pulls it in).",
+     "element": "source-map-js allows event-loop denial of service through indexed source-map section offsets",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-7b7df527a9"
+    },
+    {
+     "severity": "Important",
+     "priority": "P2 - fix soon",
+     "category": "Packages",
+     "issue": "Vulnerable dependency (high)",
+     "description": "",
+     "current_value": "svgo 3.0.0 - 3.3.4",
+     "expected_value": "",
+     "recommended_fix": "npm audit fix (or upgrade the package that pulls it in).",
+     "element": "SVGO DoS through entity expansion in DOCTYPE (Billion Laughs); SVGO removeScripts plugin leaves some executable scripts intact; SVGO: removeScripts allows executable links through namespace and contro",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-c00ad50445"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Packages",
+     "issue": "Vulnerable dependency (moderate)",
+     "description": "",
+     "current_value": "@humanfs/node <0.16.8",
+     "expected_value": "",
+     "recommended_fix": "npm audit fix (or upgrade the package that pulls it in).",
+     "element": "humanfs: Recursive copy follows symlinked files and copies data from outside the source tree",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-3323b284d5"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Packages",
+     "issue": "Vulnerable dependency (moderate)",
+     "description": "",
+     "current_value": "ajv <6.14.0",
+     "expected_value": "",
+     "recommended_fix": "npm audit fix (or upgrade the package that pulls it in).",
+     "element": "ajv has ReDoS when using `$data` option",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-4ce4721dec"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Packages",
+     "issue": "Vulnerable dependency (moderate)",
+     "description": "",
+     "current_value": "baseline-browser-mapping >=2.0.0 <2.11.0",
+     "expected_value": "",
+     "recommended_fix": "npm audit fix (or upgrade the package that pulls it in).",
+     "element": "baseline-browser-mapping process termination on invalid input causes denial of service",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-a8c5b52709"
+    }
+   ]
+  },
+  {
+   "url": "file: py files/27_assets_checker.py",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 1,
+    "Info": 0
+   },
+   "total_issues": 1,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "Bandit B314: blacklist",
+     "description": "",
+     "current_value": "Using xml.etree.ElementTree.fromstring to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.fromstring with its defusedxml equivalent function or make su",
+     "expected_value": "",
+     "recommended_fix": "See https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b313-b320-xml-bad-elementtree.",
+     "element": "py files/27_assets_checker.py:321",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-888ee45016"
+    }
+   ]
+  },
+  {
+   "url": "file: py files/29_live_vs_dev_checker.py",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 1,
+    "Info": 0
+   },
+   "total_issues": 1,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "Bandit B314: blacklist",
+     "description": "",
+     "current_value": "Using xml.etree.ElementTree.fromstring to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.fromstring with its defusedxml equivalent function or make su",
+     "expected_value": "",
+     "recommended_fix": "See https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b313-b320-xml-bad-elementtree.",
+     "element": "py files/29_live_vs_dev_checker.py:100",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-f46d098714"
+    }
+   ]
+  },
+  {
+   "url": "file: py files/seo_common.py",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 4,
+    "Info": 0
+   },
+   "total_issues": 4,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "Bandit B314: blacklist",
+     "description": "",
+     "current_value": "Using xml.etree.ElementTree.fromstring to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.fromstring with its defusedxml equivalent function or make su",
+     "expected_value": "",
+     "recommended_fix": "See https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b313-b320-xml-bad-elementtree.",
+     "element": "py files/seo_common.py:404",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-a13323f339"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "Bandit B314: blacklist",
+     "description": "",
+     "current_value": "Using xml.etree.ElementTree.fromstring to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.fromstring with its defusedxml equivalent function or make su",
+     "expected_value": "",
+     "recommended_fix": "See https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b313-b320-xml-bad-elementtree.",
+     "element": "py files/seo_common.py:413",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-1509c77203"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "Bandit B314: blacklist",
+     "description": "",
+     "current_value": "Using xml.etree.ElementTree.fromstring to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.fromstring with its defusedxml equivalent function or make su",
+     "expected_value": "",
+     "recommended_fix": "See https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b313-b320-xml-bad-elementtree.",
+     "element": "py files/seo_common.py:620",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-66efa729ed"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "Bandit B610: django_extra_used",
+     "description": "",
+     "current_value": "Use of extra potential SQL attack vector.",
+     "expected_value": "",
+     "recommended_fix": "See https://bandit.readthedocs.io/en/1.9.4/plugins/b610_django_extra_used.html.",
+     "element": "py files/seo_common.py:296",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-fff91a28f4"
+    }
+   ]
+  },
+  {
+   "url": "file: src/app/digital-services/[slug]/page.tsx",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 3,
+    "Info": 0
+   },
+   "total_issues": 3,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'ServiceIdealClient' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/app/digital-services/[slug]/page.tsx:22",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-1129b283a8"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'ServiceTrustSignals' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/app/digital-services/[slug]/page.tsx:23",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-dd5cfcdafd"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'TrustSignals' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/app/digital-services/[slug]/page.tsx:25",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-f4543d2c78"
+    }
+   ]
+  },
+  {
+   "url": "file: src/app/software-services/custom-software-development/page.tsx",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 1,
+    "Info": 0
+   },
+   "total_issues": 1,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'TrustSignals' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/app/software-services/custom-software-development/page.tsx:20",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-68470ab171"
+    }
+   ]
+  },
+  {
+   "url": "file: src/app/tools/[slug]/page.tsx",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 8,
+    "Info": 0
+   },
+   "total_issues": 8,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'Layers' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/app/tools/[slug]/page.tsx:14",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-d655523345"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'Cpu' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/app/tools/[slug]/page.tsx:15",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-f1e2213d1f"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'Clock' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/app/tools/[slug]/page.tsx:16",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-6b23c43de4"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'ExternalLink' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/app/tools/[slug]/page.tsx:17",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-0298421555"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'HelpCircle' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/app/tools/[slug]/page.tsx:18",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-df8193cf2c"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'Activity' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/app/tools/[slug]/page.tsx:19",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-04926f5f6c"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'GitBranch' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/app/tools/[slug]/page.tsx:20",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-8457dd9d54"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'i' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/app/tools/[slug]/page.tsx:158",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-58a9a97560"
+    }
+   ]
+  },
+  {
+   "url": "file: src/app/tools/page.tsx",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 9,
+    "Info": 0
+   },
+   "total_issues": 9,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'Zap' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/app/tools/page.tsx:12",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-8c8531def8"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'Repeat' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/app/tools/page.tsx:13",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-a2702f1d80"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'Lock' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/app/tools/page.tsx:14",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-08a6d2c89b"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'GitBranch' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/app/tools/page.tsx:15",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-52788b3cbd"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'Activity' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/app/tools/page.tsx:17",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-361b501a50"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'CheckCircle2' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/app/tools/page.tsx:18",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-0951f63d8e"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'Database' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/app/tools/page.tsx:20",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-86eb728f0f"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'Layers' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/app/tools/page.tsx:21",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-29fdf68a3b"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'Cpu' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/app/tools/page.tsx:23",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-29dd9fe6b4"
+    }
+   ]
+  },
+  {
+   "url": "file: src/components/Blog/BlogPreview.tsx",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 2,
+    "Info": 0
+   },
+   "total_issues": 2,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'TrendingUp' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Blog/BlogPreview.tsx:8",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-79d2299b16"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'isHovered' is assigned a value but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Blog/BlogPreview.tsx:307",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-271c956600"
+    }
+   ]
+  },
+  {
+   "url": "file: src/components/Contact/CallScheduling.tsx",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 1,
+    "Info": 0
+   },
+   "total_issues": 1,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'MessageSquare' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Contact/CallScheduling.tsx:4",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-8129cabfd7"
+    }
+   ]
+  },
+  {
+   "url": "file: src/components/Contact/ContactCTA.tsx",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 1,
+    "Info": 0
+   },
+   "total_issues": 1,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'ArrowRight' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Contact/ContactCTA.tsx:4",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-bc5a2ddf84"
+    }
+   ]
+  },
+  {
+   "url": "file: src/components/Contact/ContactFAQ.tsx",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 2,
+    "Optimization": 2,
+    "Info": 0
+   },
+   "total_issues": 4,
+   "issues": [
+    {
+     "severity": "Important",
+     "priority": "P2 - fix soon",
+     "category": "Code",
+     "issue": "ESLint error: react/no-unescaped-entities",
+     "description": "",
+     "current_value": "`'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Contact/ContactFAQ.tsx:101",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-67fb20c0fe"
+    },
+    {
+     "severity": "Important",
+     "priority": "P2 - fix soon",
+     "category": "Code",
+     "issue": "ESLint error: react/no-unescaped-entities",
+     "description": "",
+     "current_value": "`'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Contact/ContactFAQ.tsx:101",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-67fb20c0fe"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'MessageCircle' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Contact/ContactFAQ.tsx:9",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-eb883c1e2e"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'ArrowRight' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Contact/ContactFAQ.tsx:10",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-757cc92514"
+    }
+   ]
+  },
+  {
+   "url": "file: src/components/Contact/OfficeLocation.tsx",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 4,
+    "Info": 0
+   },
+   "total_issues": 4,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'AnimatePresence' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Contact/OfficeLocation.tsx:3",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-9214a7589f"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'ChevronRight' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Contact/OfficeLocation.tsx:12",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-710886eb7f"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'CheckCircle2' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Contact/OfficeLocation.tsx:13",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-ad624082ed"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'Calendar' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Contact/OfficeLocation.tsx:14",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-5de5e483df"
+    }
+   ]
+  },
+  {
+   "url": "file: src/components/ContactForm/EmbeddedContactForm.tsx",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 1,
+    "Info": 0
+   },
+   "total_issues": 1,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'ArrowRight' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/ContactForm/EmbeddedContactForm.tsx:17",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-96d22e6bd8"
+    }
+   ]
+  },
+  {
+   "url": "file: src/components/Home/HomeServices.tsx",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 3,
+    "Info": 0
+   },
+   "total_issues": 3,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'ArrowRight' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Home/HomeServices.tsx:20",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-c8882e66f5"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'Sparkles' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Home/HomeServices.tsx:21",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-e4d53db2be"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'Button' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Home/HomeServices.tsx:48",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-27976fe7e2"
+    }
+   ]
+  },
+  {
+   "url": "file: src/components/HowWeWork/HowWeWork.tsx",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 2,
+    "Info": 0
+   },
+   "total_issues": 2,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'useScroll' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/HowWeWork/HowWeWork.tsx:3",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-d1a6c0acfd"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'useTransform' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/HowWeWork/HowWeWork.tsx:3",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-9fc7b3829c"
+    }
+   ]
+  },
+  {
+   "url": "file: src/components/OurTeamPage/DeveloperTeam.tsx",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 1,
+    "Info": 0
+   },
+   "total_issues": 1,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'index' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/OurTeamPage/DeveloperTeam.tsx:128",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-f96a278f90"
+    }
+   ]
+  },
+  {
+   "url": "file: src/components/OurTeamPage/TeamHero.tsx",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 2,
+    "Info": 0
+   },
+   "total_issues": 2,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'motion' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/OurTeamPage/TeamHero.tsx:5",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-28819f3d8a"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: react-hooks/exhaustive-deps",
+     "description": "",
+     "current_value": "The 'fullText' array makes the dependencies of useEffect Hook (at line 48) change on every render. Move it inside the useEffect callback. Alternatively, wrap the initialization of 'fullText' in its ow",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/OurTeamPage/TeamHero.tsx:9",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-5e6381350b"
+    }
+   ]
+  },
+  {
+   "url": "file: src/components/Pages/HowWeWorkView.tsx",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 1,
+    "Optimization": 0,
+    "Info": 0
+   },
+   "total_issues": 1,
+   "issues": [
+    {
+     "severity": "Important",
+     "priority": "P2 - fix soon",
+     "category": "Code",
+     "issue": "ESLint error: @typescript-eslint/no-explicit-any",
+     "description": "",
+     "current_value": "Unexpected any. Specify a different type.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Pages/HowWeWorkView.tsx:181",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-3e0b92a019"
+    }
+   ]
+  },
+  {
+   "url": "file: src/components/Pages/ItServicesView.tsx",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 3,
+    "Info": 0
+   },
+   "total_issues": 3,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'IdealFor' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Pages/ItServicesView.tsx:14",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-8f1d2d2352"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'TrustSignals' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Pages/ItServicesView.tsx:15",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-5fee880231"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'ServiceTrustSignals' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Pages/ItServicesView.tsx:17",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-48278ec822"
+    }
+   ]
+  },
+  {
+   "url": "file: src/components/Portfolio/PortfolioPreview.tsx",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 1,
+    "Info": 0
+   },
+   "total_issues": 1,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'hoveredId' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Portfolio/PortfolioPreview.tsx:451",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-94c4820bc5"
+    }
+   ]
+  },
+  {
+   "url": "file: src/components/PricePackage/PricePackage.tsx",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 2,
+    "Info": 0
+   },
+   "total_issues": 2,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'hoveredId' is assigned a value but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/PricePackage/PricePackage.tsx:42",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-ef97339b85"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'router' is assigned a value but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/PricePackage/PricePackage.tsx:43",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-82c4c59f4e"
+    }
+   ]
+  },
+  {
+   "url": "file: src/components/Services/AdditionalServiceSections.tsx",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 5,
+    "Info": 0
+   },
+   "total_issues": 5,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'Link' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Services/AdditionalServiceSections.tsx:2",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-5807c5ca27"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'ArrowRight' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Services/AdditionalServiceSections.tsx:5",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-19c7a0da4b"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'Code2' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Services/AdditionalServiceSections.tsx:7",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-3a91859f6f"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'TechStackProps' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Services/AdditionalServiceSections.tsx:19",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-afff48331c"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'FinalCTAProps' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Services/AdditionalServiceSections.tsx:39",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-280f67ad11"
+    }
+   ]
+  },
+  {
+   "url": "file: src/components/Services/ServiceApproach.tsx",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 1,
+    "Info": 0
+   },
+   "total_issues": 1,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'ArrowRight' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Services/ServiceApproach.tsx:14",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-e9224bbb4d"
+    }
+   ]
+  },
+  {
+   "url": "file: src/components/Services/ServiceBenefitsModern.tsx",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 1,
+    "Info": 0
+   },
+   "total_issues": 1,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'Workflow' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Services/ServiceBenefitsModern.tsx:20",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-3b00695e79"
+    }
+   ]
+  },
+  {
+   "url": "file: src/components/Services/ServiceCardSection.tsx",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 2,
+    "Info": 0
+   },
+   "total_issues": 2,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'Workflow' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Services/ServiceCardSection.tsx:20",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-693cfd906f"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'Lock' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Services/ServiceCardSection.tsx:24",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-8e1b070799"
+    }
+   ]
+  },
+  {
+   "url": "file: src/components/Services/ServiceCompetitiveEdge.tsx",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 9,
+    "Info": 0
+   },
+   "total_issues": 9,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'Globe2' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Services/ServiceCompetitiveEdge.tsx:7",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-6e0a539e5e"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'Zap' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Services/ServiceCompetitiveEdge.tsx:8",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-70766238ca"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'Users' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Services/ServiceCompetitiveEdge.tsx:9",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-db5ef7081d"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'Infinity' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Services/ServiceCompetitiveEdge.tsx:10",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-a27800a48b"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'Repeat' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Services/ServiceCompetitiveEdge.tsx:11",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-85efc3671c"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'Users2' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Services/ServiceCompetitiveEdge.tsx:12",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-5cc85cf1f3"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'ListChecks' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Services/ServiceCompetitiveEdge.tsx:13",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-3594cb8115"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'TrendingUp' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Services/ServiceCompetitiveEdge.tsx:14",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-5618556239"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'ShieldCheck' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Services/ServiceCompetitiveEdge.tsx:15",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-f21a1f54d6"
+    }
+   ]
+  },
+  {
+   "url": "file: src/components/Services/ServiceIntro.tsx",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 1,
+    "Info": 0
+   },
+   "total_issues": 1,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'ArrowRight' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Services/ServiceIntro.tsx:4",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-a10a144f54"
+    }
+   ]
+  },
+  {
+   "url": "file: src/components/Services/ServiceOnboarding.tsx",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 1,
+    "Info": 0
+   },
+   "total_issues": 1,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'Check' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Services/ServiceOnboarding.tsx:15",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-a26bfe9157"
+    }
+   ]
+  },
+  {
+   "url": "file: src/components/Services/ServiceWhoWeServe.tsx",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 2,
+    "Info": 0
+   },
+   "total_issues": 2,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'TrendingUp' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Services/ServiceWhoWeServe.tsx:8",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-759dcf64ba"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'Building' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Services/ServiceWhoWeServe.tsx:9",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-c8156589a2"
+    }
+   ]
+  },
+  {
+   "url": "file: src/components/StepperCard/StepperCard3.tsx",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 3,
+    "Info": 0
+   },
+   "total_issues": 3,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'ArrowRight' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/StepperCard/StepperCard3.tsx:2",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-d9e7e42c7a"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'iconComponents' is assigned a value but only used as a type.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/StepperCard/StepperCard3.tsx:8",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-c33f754122"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'IconName' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/StepperCard/StepperCard3.tsx:18",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-1a3fac7934"
+    }
+   ]
+  },
+  {
+   "url": "file: src/components/TechTable/TechGrid.tsx",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 1,
+    "Info": 0
+   },
+   "total_issues": 1,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'i' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/TechTable/TechGrid.tsx:126",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-2bd99bf3e9"
+    }
+   ]
+  },
+  {
+   "url": "file: src/components/Testimonial/Testimonial.tsx",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 2,
+    "Info": 0
+   },
+   "total_issues": 2,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'title' is assigned a value but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Testimonial/Testimonial.tsx:68",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-7291bdf994"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'badge' is assigned a value but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Testimonial/Testimonial.tsx:69",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-4d1f37083f"
+    }
+   ]
+  },
+  {
+   "url": "file: src/components/Testimonial/TestimonialShowcase.tsx",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 3,
+    "Info": 0
+   },
+   "total_issues": 3,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'variant' is assigned a value but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Testimonial/TestimonialShowcase.tsx:136",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-ba152151f8"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'interval' is assigned a value but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Testimonial/TestimonialShowcase.tsx:137",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-71ecdbd3ed"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'Carousel' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Testimonial/TestimonialShowcase.tsx:184",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-801f254712"
+    }
+   ]
+  },
+  {
+   "url": "file: src/components/Tools/ToolDirectory.tsx",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 1,
+    "Info": 0
+   },
+   "total_issues": 1,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'CheckCircle2' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Tools/ToolDirectory.tsx:6",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-16cf5274b2"
+    }
+   ]
+  },
+  {
+   "url": "file: src/components/Visuals/CompanyVisuals.tsx",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 2,
+    "Info": 0
+   },
+   "total_issues": 2,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @next/next/no-img-element",
+     "description": "",
+     "current_value": "Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage o",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Visuals/CompanyVisuals.tsx:1103",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-4ea2fd07bf"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @next/next/no-img-element",
+     "description": "",
+     "current_value": "Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage o",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/Visuals/CompanyVisuals.tsx:1125",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-81db072dd3"
+    }
+   ]
+  },
+  {
+   "url": "file: src/components/sections/ContentSection.tsx",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 1,
+    "Info": 0
+   },
+   "total_issues": 1,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @next/next/no-img-element",
+     "description": "",
+     "current_value": "Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage o",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/sections/ContentSection.tsx:144",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-5863bfc139"
+    }
+   ]
+  },
+  {
+   "url": "file: src/components/sections/TestimonialsSection.tsx",
+   "http_status": "",
+   "in_sitemap": null,
+   "crawl_depth": null,
+   "score": null,
+   "counts": {
+    "Critical": 0,
+    "Important": 0,
+    "Optimization": 3,
+    "Info": 0
+   },
+   "total_issues": 3,
+   "issues": [
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'title' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/sections/TestimonialsSection.tsx:21",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-e26d7b53d0"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'description' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/sections/TestimonialsSection.tsx:21",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-959818bae3"
+    },
+    {
+     "severity": "Optimization",
+     "priority": "P3 - improve",
+     "category": "Code",
+     "issue": "ESLint warning: @typescript-eslint/no-unused-vars",
+     "description": "",
+     "current_value": "'variant' is defined but never used.",
+     "expected_value": "",
+     "recommended_fix": "Fix the code at the line shown (npm run lint).",
+     "element": "src/components/sections/TestimonialsSection.tsx:21",
+     "details": "",
+     "http_status": "",
+     "in_sitemap": "",
+     "report": "Repo Audit Report",
+     "id": "28_repo-7cde7cc500"
+    }
+   ]
+  }
+ ],
+ "site_wide_issues": [
+  {
+   "severity": "Info",
+   "priority": "P4 - for information",
+   "category": "Build",
+   "issue": "Not checked: production build",
+   "description": "This check did not run, so its result is unknown (not a pass).",
+   "current_value": "--build not given (it rewrites .next - stop `next start` first)",
+   "expected_value": "the check runs",
+   "recommended_fix": "python \"py files/28_repo_audit.py\" --build   (or run_all.py --repo-build)",
+   "element": "",
+   "details": "",
+   "http_status": "",
+   "in_sitemap": "",
+   "report": "Repo Audit Report",
+   "id": "28_repo-e368e14c53"
+  }
+ ],
+ "data": {
+  "npm audit": [
+   {
+    "Package": "@babel/core",
+    "Severity": "low",
+    "Range": "<=7.29.0",
+    "Advisories": "@babel/core: Arbitrary File Read via sourceMappingURL Comment",
+    "Fix available": true
+   },
+   {
+    "Package": "@babel/plugin-transform-modules-systemjs",
+    "Severity": "high",
+    "Range": "7.12.0 - 7.29.0",
+    "Advisories": "@babel/plugin-transform-modules-systemjs generates arbitrary code when compiling malicious input",
+    "Fix available": true
+   },
+   {
+    "Package": "@humanfs/node",
+    "Severity": "moderate",
+    "Range": "<0.16.8",
+    "Advisories": "humanfs: Recursive copy follows symlinked files and copies data from outside the source tree",
+    "Fix available": true
+   },
+   {
+    "Package": "@next/eslint-plugin-next",
+    "Severity": "high",
+    "Range": ">=14.3.0-canary.0",
+    "Advisories": "",
+    "Fix available": true
+   },
+   {
+    "Package": "ajv",
+    "Severity": "moderate",
+    "Range": "<6.14.0",
+    "Advisories": "ajv has ReDoS when using `$data` option",
+    "Fix available": true
+   },
+   {
+    "Package": "baseline-browser-mapping",
+    "Severity": "moderate",
+    "Range": ">=2.0.0 <2.11.0",
+    "Advisories": "baseline-browser-mapping process termination on invalid input causes denial of service",
+    "Fix available": true
+   },
+   {
+    "Package": "brace-expansion",
+    "Severity": "high",
+    "Range": "<=1.1.20 || 2.0.0 - 2.1.6",
+    "Advisories": "brace-expansion: Zero-step sequence causes process hang and memory exhaustion; brace-expansion: Zero-step sequence causes process hang and memory exhaustion; brace-expansion: DoS via exponential-time ",
+    "Fix available": true
+   },
+   {
+    "Package": "braces",
+    "Severity": "high",
+    "Range": "*",
+    "Advisories": "braces vulnerable to stack-exhaustion denial of service through deeply nested patterns",
+    "Fix available": true
+   },
+   {
+    "Package": "browserslist",
+    "Severity": "high",
+    "Range": "<=4.28.6",
+    "Advisories": "Browserslist: Unbounded memory growth (no cache eviction) via distinct query results, leading to eventual OOM; Browserslist: Uncaught crash / prototype write via untrusted browserslist-stats.json cust",
+    "Fix available": true
+   },
+   {
+    "Package": "eslint-config-next",
+    "Severity": "high",
+    "Range": ">=14.3.0-canary.0",
+    "Advisories": "",
+    "Fix available": true
+   },
+   {
+    "Package": "fast-glob",
+    "Severity": "high",
+    "Range": "*",
+    "Advisories": "",
+    "Fix available": true
+   },
+   {
+    "Package": "flatted",
+    "Severity": "high",
+    "Range": "<=3.4.1",
+    "Advisories": "flatted vulnerable to unbounded recursion DoS in parse() revive phase; Prototype Pollution via parse() in NodeJS flatted",
+    "Fix available": true
+   },
+   {
+    "Package": "js-yaml",
+    "Severity": "high",
+    "Range": "4.0.0 - 4.3.1",
+    "Advisories": "JS-YAML: Quadratic-complexity DoS in merge key handling via repeated aliases; js-yaml: YAML merge-key chains can force quadratic CPU consumption; JS-YAML: Quadratic CPU consumption in !!omap resolutio",
+    "Fix available": true
+   },
+   {
+    "Package": "micromatch",
+    "Severity": "high",
+    "Range": ">=0.2.0",
+    "Advisories": "",
+    "Fix available": true
+   },
+   {
+    "Package": "minimatch",
+    "Severity": "high",
+    "Range": "<=3.1.3 || 9.0.0 - 9.0.6",
+    "Advisories": "minimatch has a ReDoS via repeated wildcards with non-matching literal in pattern; minimatch has a ReDoS via repeated wildcards with non-matching literal in pattern; minimatch has ReDoS: matchOne() co",
+    "Fix available": true
+   },
+   {
+    "Package": "nanoid",
+    "Severity": "high",
+    "Range": "<=3.3.17",
+    "Advisories": "nanoid: non-secure generators can loop indefinitely with negative size; nanoid: custom generators can loop indefinitely when size is zero; nanoid: Integer Overflow or Wraparound",
+    "Fix available": true
+   },
+   {
+    "Package": "next",
+    "Severity": "critical",
+    "Range": "9.3.4-canary.0 - 16.3.7",
+    "Advisories": "Next.js self-hosted applications vulnerable to DoS via Image Optimizer remotePatterns configuration; Next.js HTTP request deserialization can lead to DoS when using insecure React Server Components; N",
+    "Fix available": true
+   },
+   {
+    "Package": "picomatch",
+    "Severity": "high",
+    "Range": "<=2.3.1 || 4.0.0 - 4.0.3",
+    "Advisories": "Picomatch: Method Injection in POSIX Character Classes causes incorrect Glob Matching; Picomatch: Method Injection in POSIX Character Classes causes incorrect Glob Matching; Picomatch has a ReDoS vuln",
+    "Fix available": true
+   },
+   {
+    "Package": "postcss",
+    "Severity": "high",
+    "Range": "<=8.5.22",
+    "Advisories": "PostCSS has XSS via Unescaped </style> in its CSS Stringify Output; PostCSS: Arbitrary file read and information disclosure via attacker-controlled sourceMappingURL in CSS comments; PostCSS: incomplet",
+    "Fix available": true
+   },
+   {
+    "Package": "sharp",
+    "Severity": "high",
+    "Range": "<=0.35.5-rc.1",
+    "Advisories": "sharp inherited vulnerabilities in libvips: CVE-2026-33327, CVE-2026-33328, CVE-2026-35590, CVE-2026-35591; sharp: Vulnerabilities in libheif: GHSA-g89c-p67h-r497 and GHSA-2jg2-4ch7-h545; sharp : Vuln",
+    "Fix available": true
+   },
+   {
+    "Package": "source-map-js",
+    "Severity": "high",
+    "Range": "1.0.0 - 1.2.1",
+    "Advisories": "source-map-js allows event-loop denial of service through indexed source-map section offsets",
+    "Fix available": true
+   },
+   {
+    "Package": "svgo",
+    "Severity": "high",
+    "Range": "3.0.0 - 3.3.4",
+    "Advisories": "SVGO DoS through entity expansion in DOCTYPE (Billion Laughs); SVGO removeScripts plugin leaves some executable scripts intact; SVGO: removeScripts allows executable links through namespace and contro",
+    "Fix available": true
+   }
+  ],
+  "ESLint": [
+   {
+    "File": "src/app/digital-services/[slug]/page.tsx",
+    "Line": 22,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'ServiceIdealClient' is defined but never used."
+   },
+   {
+    "File": "src/app/digital-services/[slug]/page.tsx",
+    "Line": 23,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'ServiceTrustSignals' is defined but never used."
+   },
+   {
+    "File": "src/app/digital-services/[slug]/page.tsx",
+    "Line": 25,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'TrustSignals' is defined but never used."
+   },
+   {
+    "File": "src/app/software-services/custom-software-development/page.tsx",
+    "Line": 20,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'TrustSignals' is defined but never used."
+   },
+   {
+    "File": "src/app/tools/[slug]/page.tsx",
+    "Line": 14,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'Layers' is defined but never used."
+   },
+   {
+    "File": "src/app/tools/[slug]/page.tsx",
+    "Line": 15,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'Cpu' is defined but never used."
+   },
+   {
+    "File": "src/app/tools/[slug]/page.tsx",
+    "Line": 16,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'Clock' is defined but never used."
+   },
+   {
+    "File": "src/app/tools/[slug]/page.tsx",
+    "Line": 17,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'ExternalLink' is defined but never used."
+   },
+   {
+    "File": "src/app/tools/[slug]/page.tsx",
+    "Line": 18,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'HelpCircle' is defined but never used."
+   },
+   {
+    "File": "src/app/tools/[slug]/page.tsx",
+    "Line": 19,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'Activity' is defined but never used."
+   },
+   {
+    "File": "src/app/tools/[slug]/page.tsx",
+    "Line": 20,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'GitBranch' is defined but never used."
+   },
+   {
+    "File": "src/app/tools/[slug]/page.tsx",
+    "Line": 158,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'i' is defined but never used."
+   },
+   {
+    "File": "src/app/tools/page.tsx",
+    "Line": 12,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'Zap' is defined but never used."
+   },
+   {
+    "File": "src/app/tools/page.tsx",
+    "Line": 13,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'Repeat' is defined but never used."
+   },
+   {
+    "File": "src/app/tools/page.tsx",
+    "Line": 14,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'Lock' is defined but never used."
+   },
+   {
+    "File": "src/app/tools/page.tsx",
+    "Line": 15,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'GitBranch' is defined but never used."
+   },
+   {
+    "File": "src/app/tools/page.tsx",
+    "Line": 17,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'Activity' is defined but never used."
+   },
+   {
+    "File": "src/app/tools/page.tsx",
+    "Line": 18,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'CheckCircle2' is defined but never used."
+   },
+   {
+    "File": "src/app/tools/page.tsx",
+    "Line": 20,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'Database' is defined but never used."
+   },
+   {
+    "File": "src/app/tools/page.tsx",
+    "Line": 21,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'Layers' is defined but never used."
+   },
+   {
+    "File": "src/app/tools/page.tsx",
+    "Line": 23,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'Cpu' is defined but never used."
+   },
+   {
+    "File": "src/components/Blog/BlogPreview.tsx",
+    "Line": 8,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'TrendingUp' is defined but never used."
+   },
+   {
+    "File": "src/components/Blog/BlogPreview.tsx",
+    "Line": 307,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'isHovered' is assigned a value but never used."
+   },
+   {
+    "File": "src/components/Contact/CallScheduling.tsx",
+    "Line": 4,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'MessageSquare' is defined but never used."
+   },
+   {
+    "File": "src/components/Contact/ContactCTA.tsx",
+    "Line": 4,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'ArrowRight' is defined but never used."
+   },
+   {
+    "File": "src/components/Contact/ContactFAQ.tsx",
+    "Line": 9,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'MessageCircle' is defined but never used."
+   },
+   {
+    "File": "src/components/Contact/ContactFAQ.tsx",
+    "Line": 10,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'ArrowRight' is defined but never used."
+   },
+   {
+    "File": "src/components/Contact/ContactFAQ.tsx",
+    "Line": 101,
+    "Level": "error",
+    "Rule": "react/no-unescaped-entities",
+    "Message": "`'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`."
+   },
+   {
+    "File": "src/components/Contact/ContactFAQ.tsx",
+    "Line": 101,
+    "Level": "error",
+    "Rule": "react/no-unescaped-entities",
+    "Message": "`'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`."
+   },
+   {
+    "File": "src/components/Contact/OfficeLocation.tsx",
+    "Line": 3,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'AnimatePresence' is defined but never used."
+   },
+   {
+    "File": "src/components/Contact/OfficeLocation.tsx",
+    "Line": 12,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'ChevronRight' is defined but never used."
+   },
+   {
+    "File": "src/components/Contact/OfficeLocation.tsx",
+    "Line": 13,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'CheckCircle2' is defined but never used."
+   },
+   {
+    "File": "src/components/Contact/OfficeLocation.tsx",
+    "Line": 14,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'Calendar' is defined but never used."
+   },
+   {
+    "File": "src/components/ContactForm/EmbeddedContactForm.tsx",
+    "Line": 17,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'ArrowRight' is defined but never used."
+   },
+   {
+    "File": "src/components/Home/HomeServices.tsx",
+    "Line": 20,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'ArrowRight' is defined but never used."
+   },
+   {
+    "File": "src/components/Home/HomeServices.tsx",
+    "Line": 21,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'Sparkles' is defined but never used."
+   },
+   {
+    "File": "src/components/Home/HomeServices.tsx",
+    "Line": 48,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'Button' is defined but never used."
+   },
+   {
+    "File": "src/components/HowWeWork/HowWeWork.tsx",
+    "Line": 3,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'useScroll' is defined but never used."
+   },
+   {
+    "File": "src/components/HowWeWork/HowWeWork.tsx",
+    "Line": 3,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'useTransform' is defined but never used."
+   },
+   {
+    "File": "src/components/OurTeamPage/DeveloperTeam.tsx",
+    "Line": 128,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'index' is defined but never used."
+   },
+   {
+    "File": "src/components/OurTeamPage/TeamHero.tsx",
+    "Line": 5,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'motion' is defined but never used."
+   },
+   {
+    "File": "src/components/OurTeamPage/TeamHero.tsx",
+    "Line": 9,
+    "Level": "warning",
+    "Rule": "react-hooks/exhaustive-deps",
+    "Message": "The 'fullText' array makes the dependencies of useEffect Hook (at line 48) change on every render. Move it inside the useEffect callback. Alternativel"
+   },
+   {
+    "File": "src/components/Pages/HowWeWorkView.tsx",
+    "Line": 181,
+    "Level": "error",
+    "Rule": "@typescript-eslint/no-explicit-any",
+    "Message": "Unexpected any. Specify a different type."
+   },
+   {
+    "File": "src/components/Pages/ItServicesView.tsx",
+    "Line": 14,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'IdealFor' is defined but never used."
+   },
+   {
+    "File": "src/components/Pages/ItServicesView.tsx",
+    "Line": 15,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'TrustSignals' is defined but never used."
+   },
+   {
+    "File": "src/components/Pages/ItServicesView.tsx",
+    "Line": 17,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'ServiceTrustSignals' is defined but never used."
+   },
+   {
+    "File": "src/components/Portfolio/PortfolioPreview.tsx",
+    "Line": 451,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'hoveredId' is defined but never used."
+   },
+   {
+    "File": "src/components/PricePackage/PricePackage.tsx",
+    "Line": 42,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'hoveredId' is assigned a value but never used."
+   },
+   {
+    "File": "src/components/PricePackage/PricePackage.tsx",
+    "Line": 43,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'router' is assigned a value but never used."
+   },
+   {
+    "File": "src/components/Services/AdditionalServiceSections.tsx",
+    "Line": 2,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'Link' is defined but never used."
+   },
+   {
+    "File": "src/components/Services/AdditionalServiceSections.tsx",
+    "Line": 5,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'ArrowRight' is defined but never used."
+   },
+   {
+    "File": "src/components/Services/AdditionalServiceSections.tsx",
+    "Line": 7,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'Code2' is defined but never used."
+   },
+   {
+    "File": "src/components/Services/AdditionalServiceSections.tsx",
+    "Line": 19,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'TechStackProps' is defined but never used."
+   },
+   {
+    "File": "src/components/Services/AdditionalServiceSections.tsx",
+    "Line": 39,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'FinalCTAProps' is defined but never used."
+   },
+   {
+    "File": "src/components/Services/ServiceApproach.tsx",
+    "Line": 14,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'ArrowRight' is defined but never used."
+   },
+   {
+    "File": "src/components/Services/ServiceBenefitsModern.tsx",
+    "Line": 20,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'Workflow' is defined but never used."
+   },
+   {
+    "File": "src/components/Services/ServiceCardSection.tsx",
+    "Line": 20,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'Workflow' is defined but never used."
+   },
+   {
+    "File": "src/components/Services/ServiceCardSection.tsx",
+    "Line": 24,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'Lock' is defined but never used."
+   },
+   {
+    "File": "src/components/Services/ServiceCompetitiveEdge.tsx",
+    "Line": 7,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'Globe2' is defined but never used."
+   },
+   {
+    "File": "src/components/Services/ServiceCompetitiveEdge.tsx",
+    "Line": 8,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'Zap' is defined but never used."
+   },
+   {
+    "File": "src/components/Services/ServiceCompetitiveEdge.tsx",
+    "Line": 9,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'Users' is defined but never used."
+   },
+   {
+    "File": "src/components/Services/ServiceCompetitiveEdge.tsx",
+    "Line": 10,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'Infinity' is defined but never used."
+   },
+   {
+    "File": "src/components/Services/ServiceCompetitiveEdge.tsx",
+    "Line": 11,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'Repeat' is defined but never used."
+   },
+   {
+    "File": "src/components/Services/ServiceCompetitiveEdge.tsx",
+    "Line": 12,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'Users2' is defined but never used."
+   },
+   {
+    "File": "src/components/Services/ServiceCompetitiveEdge.tsx",
+    "Line": 13,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'ListChecks' is defined but never used."
+   },
+   {
+    "File": "src/components/Services/ServiceCompetitiveEdge.tsx",
+    "Line": 14,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'TrendingUp' is defined but never used."
+   },
+   {
+    "File": "src/components/Services/ServiceCompetitiveEdge.tsx",
+    "Line": 15,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'ShieldCheck' is defined but never used."
+   },
+   {
+    "File": "src/components/Services/ServiceIntro.tsx",
+    "Line": 4,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'ArrowRight' is defined but never used."
+   },
+   {
+    "File": "src/components/Services/ServiceOnboarding.tsx",
+    "Line": 15,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'Check' is defined but never used."
+   },
+   {
+    "File": "src/components/Services/ServiceWhoWeServe.tsx",
+    "Line": 8,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'TrendingUp' is defined but never used."
+   },
+   {
+    "File": "src/components/Services/ServiceWhoWeServe.tsx",
+    "Line": 9,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'Building' is defined but never used."
+   },
+   {
+    "File": "src/components/StepperCard/StepperCard3.tsx",
+    "Line": 2,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'ArrowRight' is defined but never used."
+   },
+   {
+    "File": "src/components/StepperCard/StepperCard3.tsx",
+    "Line": 8,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'iconComponents' is assigned a value but only used as a type."
+   },
+   {
+    "File": "src/components/StepperCard/StepperCard3.tsx",
+    "Line": 18,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'IconName' is defined but never used."
+   },
+   {
+    "File": "src/components/TechTable/TechGrid.tsx",
+    "Line": 126,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'i' is defined but never used."
+   },
+   {
+    "File": "src/components/Testimonial/Testimonial.tsx",
+    "Line": 68,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'title' is assigned a value but never used."
+   },
+   {
+    "File": "src/components/Testimonial/Testimonial.tsx",
+    "Line": 69,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'badge' is assigned a value but never used."
+   },
+   {
+    "File": "src/components/Testimonial/TestimonialShowcase.tsx",
+    "Line": 136,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'variant' is assigned a value but never used."
+   },
+   {
+    "File": "src/components/Testimonial/TestimonialShowcase.tsx",
+    "Line": 137,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'interval' is assigned a value but never used."
+   },
+   {
+    "File": "src/components/Testimonial/TestimonialShowcase.tsx",
+    "Line": 184,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'Carousel' is defined but never used."
+   },
+   {
+    "File": "src/components/Tools/ToolDirectory.tsx",
+    "Line": 6,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'CheckCircle2' is defined but never used."
+   },
+   {
+    "File": "src/components/Visuals/CompanyVisuals.tsx",
+    "Line": 1103,
+    "Level": "warning",
+    "Rule": "@next/next/no-img-element",
+    "Message": "Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically "
+   },
+   {
+    "File": "src/components/Visuals/CompanyVisuals.tsx",
+    "Line": 1125,
+    "Level": "warning",
+    "Rule": "@next/next/no-img-element",
+    "Message": "Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically "
+   },
+   {
+    "File": "src/components/sections/ContentSection.tsx",
+    "Line": 144,
+    "Level": "warning",
+    "Rule": "@next/next/no-img-element",
+    "Message": "Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically "
+   },
+   {
+    "File": "src/components/sections/TestimonialsSection.tsx",
+    "Line": 21,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'title' is defined but never used."
+   },
+   {
+    "File": "src/components/sections/TestimonialsSection.tsx",
+    "Line": 21,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'description' is defined but never used."
+   },
+   {
+    "File": "src/components/sections/TestimonialsSection.tsx",
+    "Line": 21,
+    "Level": "warning",
+    "Rule": "@typescript-eslint/no-unused-vars",
+    "Message": "'variant' is defined but never used."
+   }
+  ],
+  "TypeScript": [],
+  "Bandit": [
+   {
+    "File": "py files/04_image_seo_checker.py",
+    "Line": 69,
+    "Severity": "LOW",
+    "Test": "B110",
+    "Issue": "Try, Except, Pass detected."
+   },
+   {
+    "File": "py files/06_social_meta_checker.py",
+    "Line": 47,
+    "Severity": "LOW",
+    "Test": "B110",
+    "Issue": "Try, Except, Pass detected."
+   },
+   {
+    "File": "py files/12_performance_checker.py",
+    "Line": 19,
+    "Severity": "LOW",
+    "Test": "B404",
+    "Issue": "Consider possible security implications associated with the subprocess module."
+   },
+   {
+    "File": "py files/12_performance_checker.py",
+    "Line": 82,
+    "Severity": "LOW",
+    "Test": "B110",
+    "Issue": "Try, Except, Pass detected."
+   },
+   {
+    "File": "py files/12_performance_checker.py",
+    "Line": 100,
+    "Severity": "LOW",
+    "Test": "B110",
+    "Issue": "Try, Except, Pass detected."
+   },
+   {
+    "File": "py files/12_performance_checker.py",
+    "Line": 110,
+    "Severity": "LOW",
+    "Test": "B603",
+    "Issue": "subprocess call - check for execution of untrusted input."
+   },
+   {
+    "File": "py files/12_performance_checker.py",
+    "Line": 161,
+    "Severity": "LOW",
+    "Test": "B112",
+    "Issue": "Try, Except, Continue detected."
+   },
+   {
+    "File": "py files/12a_core_web_vitals_checker.py",
+    "Line": 20,
+    "Severity": "LOW",
+    "Test": "B404",
+    "Issue": "Consider possible security implications associated with the subprocess module."
+   },
+   {
+    "File": "py files/12a_core_web_vitals_checker.py",
+    "Line": 55,
+    "Severity": "LOW",
+    "Test": "B603",
+    "Issue": "subprocess call - check for execution of untrusted input."
+   },
+   {
+    "File": "py files/12b_lighthouse_checker.py",
+    "Line": 20,
+    "Severity": "LOW",
+    "Test": "B404",
+    "Issue": "Consider possible security implications associated with the subprocess module."
+   },
+   {
+    "File": "py files/12b_lighthouse_checker.py",
+    "Line": 62,
+    "Severity": "LOW",
+    "Test": "B603",
+    "Issue": "subprocess call - check for execution of untrusted input."
+   },
+   {
+    "File": "py files/12b_lighthouse_checker.py",
+    "Line": 121,
+    "Severity": "LOW",
+    "Test": "B603",
+    "Issue": "subprocess call - check for execution of untrusted input."
+   },
+   {
+    "File": "py files/14_content_checker.py",
+    "Line": 38,
+    "Severity": "LOW",
+    "Test": "B311",
+    "Issue": "Standard pseudo-random generators are not suitable for security/cryptographic purposes."
+   },
+   {
+    "File": "py files/16_third_party_checker.py",
+    "Line": 134,
+    "Severity": "LOW",
+    "Test": "B110",
+    "Issue": "Try, Except, Pass detected."
+   },
+   {
+    "File": "py files/24_navigation_checker.py",
+    "Line": 139,
+    "Severity": "LOW",
+    "Test": "B110",
+    "Issue": "Try, Except, Pass detected."
+   },
+   {
+    "File": "py files/24_navigation_checker.py",
+    "Line": 176,
+    "Severity": "LOW",
+    "Test": "B112",
+    "Issue": "Try, Except, Continue detected."
+   },
+   {
+    "File": "py files/24_navigation_checker.py",
+    "Line": 274,
+    "Severity": "LOW",
+    "Test": "B112",
+    "Issue": "Try, Except, Continue detected."
+   },
+   {
+    "File": "py files/24_navigation_checker.py",
+    "Line": 311,
+    "Severity": "LOW",
+    "Test": "B110",
+    "Issue": "Try, Except, Pass detected."
+   },
+   {
+    "File": "py files/25_html_validation_checker.py",
+    "Line": 18,
+    "Severity": "LOW",
+    "Test": "B404",
+    "Issue": "Consider possible security implications associated with the subprocess module."
+   },
+   {
+    "File": "py files/25_html_validation_checker.py",
+    "Line": 43,
+    "Severity": "LOW",
+    "Test": "B607",
+    "Issue": "Starting a process with a partial executable path"
+   },
+   {
+    "File": "py files/25_html_validation_checker.py",
+    "Line": 43,
+    "Severity": "LOW",
+    "Test": "B603",
+    "Issue": "subprocess call - check for execution of untrusted input."
+   },
+   {
+    "File": "py files/25_html_validation_checker.py",
+    "Line": 55,
+    "Severity": "LOW",
+    "Test": "B607",
+    "Issue": "Starting a process with a partial executable path"
+   },
+   {
+    "File": "py files/25_html_validation_checker.py",
+    "Line": 55,
+    "Severity": "LOW",
+    "Test": "B603",
+    "Issue": "subprocess call - check for execution of untrusted input."
+   },
+   {
+    "File": "py files/25_html_validation_checker.py",
+    "Line": 112,
+    "Severity": "LOW",
+    "Test": "B607",
+    "Issue": "Starting a process with a partial executable path"
+   },
+   {
+    "File": "py files/25_html_validation_checker.py",
+    "Line": 112,
+    "Severity": "LOW",
+    "Test": "B603",
+    "Issue": "subprocess call - check for execution of untrusted input."
+   },
+   {
+    "File": "py files/27_assets_checker.py",
+    "Line": 21,
+    "Severity": "LOW",
+    "Test": "B405",
+    "Issue": "Using xml.etree.ElementTree to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree with the equivalent de"
+   },
+   {
+    "File": "py files/27_assets_checker.py",
+    "Line": 321,
+    "Severity": "MEDIUM",
+    "Test": "B314",
+    "Issue": "Using xml.etree.ElementTree.fromstring to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.fromstring "
+   },
+   {
+    "File": "py files/28_repo_audit.py",
+    "Line": 21,
+    "Severity": "LOW",
+    "Test": "B404",
+    "Issue": "Consider possible security implications associated with the subprocess module."
+   },
+   {
+    "File": "py files/28_repo_audit.py",
+    "Line": 40,
+    "Severity": "LOW",
+    "Test": "B603",
+    "Issue": "subprocess call - check for execution of untrusted input."
+   },
+   {
+    "File": "py files/29_live_vs_dev_checker.py",
+    "Line": 18,
+    "Severity": "LOW",
+    "Test": "B405",
+    "Issue": "Using xml.etree.ElementTree to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree with the equivalent de"
+   },
+   {
+    "File": "py files/29_live_vs_dev_checker.py",
+    "Line": 100,
+    "Severity": "MEDIUM",
+    "Test": "B314",
+    "Issue": "Using xml.etree.ElementTree.fromstring to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.fromstring "
+   },
+   {
+    "File": "py files/29_live_vs_dev_checker.py",
+    "Line": 249,
+    "Severity": "LOW",
+    "Test": "B110",
+    "Issue": "Try, Except, Pass detected."
+   },
+   {
+    "File": "py files/30_qa_checklist_report.py",
+    "Line": 25,
+    "Severity": "LOW",
+    "Test": "B105",
+    "Issue": "Possible hardcoded password: '4'"
+   },
+   {
+    "File": "py files/30_qa_checklist_report.py",
+    "Line": 26,
+    "Severity": "LOW",
+    "Test": "B105",
+    "Issue": "Possible hardcoded password: 'C6EFCE'"
+   },
+   {
+    "File": "py files/qa.py",
+    "Line": 23,
+    "Severity": "LOW",
+    "Test": "B404",
+    "Issue": "Consider possible security implications associated with the subprocess module."
+   },
+   {
+    "File": "py files/qa.py",
+    "Line": 36,
+    "Severity": "LOW",
+    "Test": "B105",
+    "Issue": "Possible hardcoded password: '32'"
+   },
+   {
+    "File": "py files/qa.py",
+    "Line": 104,
+    "Severity": "LOW",
+    "Test": "B603",
+    "Issue": "subprocess call - check for execution of untrusted input."
+   },
+   {
+    "File": "py files/qa.py",
+    "Line": 122,
+    "Severity": "LOW",
+    "Test": "B603",
+    "Issue": "subprocess call - check for execution of untrusted input."
+   },
+   {
+    "File": "py files/qa.py",
+    "Line": 214,
+    "Severity": "LOW",
+    "Test": "B603",
+    "Issue": "subprocess call - check for execution of untrusted input."
+   },
+   {
+    "File": "py files/run_all.py",
+    "Line": 28,
+    "Severity": "LOW",
+    "Test": "B404",
+    "Issue": "Consider possible security implications associated with the subprocess module."
+   },
+   {
+    "File": "py files/run_all.py",
+    "Line": 133,
+    "Severity": "LOW",
+    "Test": "B603",
+    "Issue": "subprocess call - check for execution of untrusted input."
+   },
+   {
+    "File": "py files/run_all.py",
+    "Line": 146,
+    "Severity": "LOW",
+    "Test": "B603",
+    "Issue": "subprocess call - check for execution of untrusted input."
+   },
+   {
+    "File": "py files/seo_common.py",
+    "Line": 296,
+    "Severity": "MEDIUM",
+    "Test": "B610",
+    "Issue": "Use of extra potential SQL attack vector."
+   },
+   {
+    "File": "py files/seo_common.py",
+    "Line": 397,
+    "Severity": "LOW",
+    "Test": "B405",
+    "Issue": "Using xml.etree.ElementTree to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree with the equivalent de"
+   },
+   {
+    "File": "py files/seo_common.py",
+    "Line": 404,
+    "Severity": "MEDIUM",
+    "Test": "B314",
+    "Issue": "Using xml.etree.ElementTree.fromstring to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.fromstring "
+   },
+   {
+    "File": "py files/seo_common.py",
+    "Line": 413,
+    "Severity": "MEDIUM",
+    "Test": "B314",
+    "Issue": "Using xml.etree.ElementTree.fromstring to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.fromstring "
+   },
+   {
+    "File": "py files/seo_common.py",
+    "Line": 617,
+    "Severity": "LOW",
+    "Test": "B405",
+    "Issue": "Using xml.etree.ElementTree to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree with the equivalent de"
+   },
+   {
+    "File": "py files/seo_common.py",
+    "Line": 620,
+    "Severity": "MEDIUM",
+    "Test": "B314",
+    "Issue": "Using xml.etree.ElementTree.fromstring to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.fromstring "
+   },
+   {
+    "File": "py files/seo_common.py",
+    "Line": 1009,
+    "Severity": "LOW",
+    "Test": "B110",
+    "Issue": "Try, Except, Pass detected."
+   },
+   {
+    "File": "py files/seo_common.py",
+    "Line": 1435,
+    "Severity": "LOW",
+    "Test": "B105",
+    "Issue": "Possible hardcoded password: 'C6EFCE'"
+   },
+   {
+    "File": "py files/seo_common.py",
+    "Line": 1547,
+    "Severity": "LOW",
+    "Test": "B110",
+    "Issue": "Try, Except, Pass detected."
+   }
+  ],
+  "TODO comments": [],
+  "Dependencies": [
+   {
+    "Section": "dependencies",
+    "Package": "@heroicons/react",
+    "Version": "^2.2.0"
+   },
+   {
+    "Section": "dependencies",
+    "Package": "@radix-ui/react-accordion",
+    "Version": "^1.2.11"
+   },
+   {
+    "Section": "dependencies",
+    "Package": "@radix-ui/react-select",
+    "Version": "^2.2.5"
+   },
+   {
+    "Section": "dependencies",
+    "Package": "@radix-ui/react-slot",
+    "Version": "^1.2.3"
+   },
+   {
+    "Section": "dependencies",
+    "Package": "@types/react-google-recaptcha",
+    "Version": "^2.1.9"
+   },
+   {
+    "Section": "dependencies",
+    "Package": "class-variance-authority",
+    "Version": "^0.7.1"
+   },
+   {
+    "Section": "dependencies",
+    "Package": "clsx",
+    "Version": "^2.1.1"
+   },
+   {
+    "Section": "dependencies",
+    "Package": "critters",
+    "Version": "^0.0.23"
+   },
+   {
+    "Section": "dependencies",
+    "Package": "framer-motion",
+    "Version": "^12.23.12"
+   },
+   {
+    "Section": "dependencies",
+    "Package": "lucide-react",
+    "Version": "^0.539.0"
+   },
+   {
+    "Section": "dependencies",
+    "Package": "next",
+    "Version": "^16.0.10"
+   },
+   {
+    "Section": "dependencies",
+    "Package": "react",
+    "Version": "19.1.0"
+   },
+   {
+    "Section": "dependencies",
+    "Package": "react-dom",
+    "Version": "19.1.0"
+   },
+   {
+    "Section": "dependencies",
+    "Package": "react-google-recaptcha",
+    "Version": "^3.1.0"
+   },
+   {
+    "Section": "dependencies",
+    "Package": "react-icons",
+    "Version": "^5.5.0"
+   },
+   {
+    "Section": "dependencies",
+    "Package": "tailwind-merge",
+    "Version": "^3.3.1"
+   },
+   {
+    "Section": "devDependencies",
+    "Package": "@eslint/eslintrc",
+    "Version": "^3"
+   },
+   {
+    "Section": "devDependencies",
+    "Package": "@netlify/plugin-nextjs",
+    "Version": "^5.13.3"
+   },
+   {
+    "Section": "devDependencies",
+    "Package": "@svgr/webpack",
+    "Version": "^8.1.0"
+   },
+   {
+    "Section": "devDependencies",
+    "Package": "@tailwindcss/postcss",
+    "Version": "^4"
+   },
+   {
+    "Section": "devDependencies",
+    "Package": "@types/node",
+    "Version": "^20"
+   },
+   {
+    "Section": "devDependencies",
+    "Package": "@types/react",
+    "Version": "^19"
+   },
+   {
+    "Section": "devDependencies",
+    "Package": "@types/react-dom",
+    "Version": "^19"
+   },
+   {
+    "Section": "devDependencies",
+    "Package": "eslint",
+    "Version": "^9"
+   },
+   {
+    "Section": "devDependencies",
+    "Package": "eslint-config-next",
+    "Version": "15.4.6"
+   },
+   {
+    "Section": "devDependencies",
+    "Package": "tailwindcss",
+    "Version": "^4"
+   },
+   {
+    "Section": "devDependencies",
+    "Package": "typescript",
+    "Version": "^5"
+   }
+  ]
+ }
+}

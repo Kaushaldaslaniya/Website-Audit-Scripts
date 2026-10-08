@@ -455,7 +455,7 @@ def audit_page(loc):
     if page["words"] < THIN_CONTENT_WORDS:
         audit.add(url, OPTIMIZATION, "Content", "Thin content", current=f"{page['words']} words in <main>",
                   expected=f"{THIN_CONTENT_WORDS}+ words")
-    page["content_hash"] = hashlib.md5(body_text.lower().encode()).hexdigest() if body_text else ""
+    page["content_hash"] = hashlib.md5(body_text.lower().encode(), usedforsecurity=False).hexdigest() if body_text else ""
     if res["ms"] > SLOW_RESPONSE_MS:
         audit.add(url, OPTIMIZATION, "Performance", "Slow server response", current=f"{res['ms']} ms",
                   expected=f"< {SLOW_RESPONSE_MS} ms")

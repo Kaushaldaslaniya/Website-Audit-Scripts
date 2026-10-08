@@ -78,5 +78,7 @@ rows.sort(key=lambda r: (r[9] == "Correct", r[0]))
 audit.note("Pages with valid hierarchy", sum(1 for r in rows if r[9] == "Correct"))
 audit.sheet("Heading Order", ["URL", "HTTP", "H1", "H2", "H3", "H4", "H5", "H6", "Heading Order", "Status", "Issue"], rows,
             (55, 6, 5, 5, 5, 5, 5, 5, 80, 11, 80))
+page_order = {p: i for i, p in enumerate(pages)}
+outline_rows.sort(key=lambda r: (page_order.get(r[0], 99999), r[1]))
 audit.sheet("Outline", ["URL", "#", "Level", "Heading text (indented by level)"], outline_rows, (55, 5, 7, 110))
 audit.save("Heading_Structure_Report")
