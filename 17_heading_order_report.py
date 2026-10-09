@@ -49,7 +49,7 @@ def analyze(loc):
 
 
 print(f"Checking heading order on {len(pages)} pages ...")
-rows = run_parallel(analyze, pages, args.workers)
+rows = [r for r in run_parallel(analyze, pages, args.workers) if r]
 rows.sort(key=lambda r: (r[8] == "Correct", r[0]))
 audit.note("Pages with a valid heading order", f"{sum(1 for r in rows if r[8] == 'Correct')} of {len(rows)}")
 audit.sheet("Heading Order", ["URL", "H1", "H2", "H3", "H4", "H5", "H6", "Heading Order", "Status", "Issues"], rows,

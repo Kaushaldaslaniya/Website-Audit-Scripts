@@ -872,8 +872,11 @@ ENG-05 word misuse (review-only, WARN).
 | `This script needs Playwright` / Chrome not found | `pip install playwright`, then install Google Chrome or `playwright install chromium` |
 | dev server restarts / errors during the run | use the production build (`npm run build && npm run start`) or `--workers 3` |
 | one script failed | the run continues; scroll up in the terminal to its error, then re-run it alone |
+| a report has `Not checked: <page> (the script failed on this item)` | that page crashed the check (the rest of the run went on); its checks show SKIP, not PASS. Re-run the script with `--only <page>` to see the error |
+| `run_all.py: error: unknown script prefix(es)` | `--only` / `--skip` take the numbers from `qa.py list` (1 and 01 both work) |
+| stopped a run with Ctrl+C | the summary still prints, marking the stopped script INTERRUPTED; the reports already written stay |
 | a check is SKIP | the result line says why (script not run, `Not checked: …` with the fix, e.g. install Java / Firefox, pass `--live`); run it with `qa.py run <ID>` |
 | a PASS / FAIL is wrong for this project | adjust `qa_config.json` (confirmed values, forbidden terms ...) or record a sign-off with `qa.py mark <ID> pass "reason"` |
 | scores look worse on localhost | sitemap / canonical / HTTPS / HSTS checks expect the live https domain - build with `NEXT_PUBLIC_SITE_URL` |
-| 31 says `Not checked: spelling and grammar (LanguageTool)` | install Java 17+ (`brew install openjdk`) and `pip install language-tool-python`; the first run downloads LanguageTool (~250 MB) - or use `--public-api` |
+| 31 says `Not checked: grammar, spacing and punctuation (LanguageTool)` | spelling is still checked (pyspellchecker), grammar / spacing / punctuation are SKIP: install Java 17+ (`brew install openjdk`) and `pip install language-tool-python`; the first run downloads LanguageTool (~250 MB) - or use `--public-api` |
 | 31 reports a correct word | if it's a real name / term used only once, add it to `qa_config.json` `spelling_ignore`, or record a sign-off with `qa.py mark ENG-01 pass "reason"` |

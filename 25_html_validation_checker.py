@@ -20,14 +20,15 @@ import tempfile
 import time
 from collections import Counter, defaultdict
 from pathlib import Path
+from urllib.parse import unquote, urlparse
 
-from seo_common import (IMPORTANT, OPTIMIZATION, TOOLS_DIR, Audit, load_site, parse_args, run_parallel,
+from seo_common import (IMPORTANT, OPTIMIZATION, TOOLS_DIR, Audit, int_arg, load_site, parse_args, run_parallel,
                         sample_pages, select_pages)
 
 
 def extra(ap):
     ap.add_argument("--no-warnings", action="store_true", help="report errors only")
-    ap.add_argument("--public-limit", type=int, default=40,
+    ap.add_argument("--public-limit", type=int_arg(1), default=40,
                     help="pages sent to validator.w3.org when Java isn't available (default %(default)s)")
 
 
@@ -95,6 +96,7 @@ if have_java() and ensure_vnu():
     engine = "vnu.jar (local)"
     work = Path(tempfile.mkdtemp(prefix="w3c-"))
     import threading
+    index = {}   # temp file name (p00001.html) -> page URL
     index_lock = threading.Lock()
 
     def save(item):
@@ -104,10 +106,11 @@ if have_java() and ensure_vnu():
             path = work / f"p{i:05d}.html"
             path.write_bytes(res["content"])
             with index_lock:
-                index[str(path)] = loc
+                index[path.name] = loc
     print(f"Downloading {len(pages)} pages ...")
     run_parallel(save, list(enumerate(pages)), args.workers)
-    files = sorted(index)
+    files = [str(work / name) for name in sorted(index)]
+    unmatched = 0
     print(f"Validating {len(files)} pages with the W3C Nu checker ...")
     for start in range(0, len(files), 200):   # batches keep the command line short
         batch = files[start:start + 200]
@@ -120,11 +123,17 @@ if have_java() and ensure_vnu():
                               (r.stderr or r.stdout)[:200], "Run vnu.jar by hand to see the error.")
             continue
         for m in messages:
-            loc = index.get(m.get("url", "").replace("file:", ""))
+            # by file name: the reported file: URL can differ from the path given (/private/var, C:/..., %20)
+            loc = index.get(Path(unquote(urlparse(m.get("url", "")).path)).name)
             if loc:
                 results.append(record(loc, m))
+            elif m.get("type") in ("error", "non-document-error") or m.get("subType") == "warning":
+                unmatched += 1
         print(f"  {min(start + 200, len(files))}/{len(files)} pages validated")
     shutil.rmtree(work, ignore_errors=True)
+    if unmatched:   # never a silent PASS: messages that could not be tied to a page
+        audit.not_checked("HTML validation", f"{unmatched} validator message(s) that could not be matched to a page",
+                          "the validator reported files the script did not recognise")
 else:
     engine = "validator.w3.org (public, main pages only)"
     subset = sample_pages(pages, per_section=0)[: args.public_limit]

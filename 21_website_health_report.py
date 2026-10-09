@@ -14,6 +14,7 @@
 
   python "py files/21_website_health_report.py"
 """
+import argparse
 import json
 import os
 import sys
@@ -72,6 +73,8 @@ def load_summaries():
     return found
 
 
+# no options: -h shows this help instead of rebuilding the report, and an unknown option is an error
+argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter).parse_args()
 summaries = load_summaries()
 if not summaries:
     sys.exit("No reports found in py files/report/<date>/json - run the checker scripts first (python \"py files/run_all.py\").")
@@ -244,11 +247,19 @@ json_path.write_text(json.dumps({
     "site_wide_issues": next((e["issues"] for e in url_entries if e["url"] == SITE_WIDE), []),
 }, indent=1, ensure_ascii=False, default=str))
 
-print("\nWEBSITE HEALTH")
+write_csv(csv_path, [h for _, h, _ in columns], ([i.get(k, "") for k, _, _ in columns] for i in issues))
+
+print("\n" + "=" * 70)
+print("✓ Website Health Master Report generated successfully!")
+print("=" * 70)
+print(f"  • Excel Report:  {rel_path(path)}")
+print(f"  • JSON Report:   {rel_path(json_path)}")
+print(f"  • CSV Report:    {rel_path(csv_path)}")
+print("-" * 70)
+print("CATEGORY SCORES:")
 for name, score, g, *_ in score_rows:
     print(f"  {name:<18} {score if isinstance(score, (int, float)) else '-':>6}  {g}")
 print(f"  {'OVERALL':<18} {overall if overall is not None else '-':>6}  {grade(overall)}")
-print(f"  {len(issues)} issues on {sum(1 for e in url_entries if e['url'] != SITE_WIDE)} URLs "
+print(f"  Total: {len(issues)} issues on {sum(1 for e in url_entries if e['url'] != SITE_WIDE)} URLs "
       f"({counts[CRITICAL]} critical, {counts[IMPORTANT]} important, {counts[OPTIMIZATION]} optimization)")
-write_csv(csv_path, [h for _, h, _ in columns], ([i.get(k, "") for k, _, _ in columns] for i in issues))
-print(f"Saved {rel_path(path)}\n      {rel_path(json_path)}\n      {rel_path(csv_path)}")
+print("=" * 70 + "\n")

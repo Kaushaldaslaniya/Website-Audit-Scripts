@@ -28,6 +28,9 @@ SECURITY_HEADERS = [  # (header, severity, recommended value)
 ]
 SENSITIVE = ["/.env", "/.env.local", "/.git/HEAD", "/.git/config", "/package.json", "/.DS_Store", "/next.config.js",
              "/.next/BUILD_ID", "/server.js", "/phpinfo.php", "/wp-admin/", "/backup.zip"]
+# <link rel=...> types the browser downloads (an http:// one is mixed content); canonical / alternate are just names
+LOADED_LINK_RELS = {"stylesheet", "preload", "modulepreload", "prefetch", "icon", "shortcut", "apple-touch-icon",
+                    "manifest", "mask-icon"}
 
 args = parse_args("Security checker")
 site, urls = load_site(args)
@@ -128,6 +131,9 @@ def check(loc):
                       ("video", "src"), ("audio", "src"), ("form", "action")):
         for el in soup.find_all(tag):
             val = (el.get(attr) or "").strip()
+            # <link rel=canonical / alternate / author> only names a URL; the browser loads nothing from it
+            if tag == "link" and not ({r.lower() for r in (el.get("rel") or [])} & LOADED_LINK_RELS):
+                continue
             if val.startswith("http://") and not re.match(r"http://(localhost|127\.)", val):
                 sev = CRITICAL if tag in ("script", "iframe", "form") else IMPORTANT
                 audit.add(loc, sev, "Mixed content", f"Insecure (http://) <{tag}>", current=val[:200],

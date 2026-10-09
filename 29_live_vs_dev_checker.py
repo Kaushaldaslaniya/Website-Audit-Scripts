@@ -22,14 +22,15 @@ from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 
 from seo_common import (CRITICAL, IMPORTANT, INFO, OPTIMIZATION, Audit, Site, discover_links, fetch, follow_redirects,
-                        load_site, main_text, meta, parse_args, qa_config, run_browser_pages, run_parallel,
+                        int_arg, load_site, main_text, meta, normalize_base, parse_args, qa_config, run_browser_pages,
+                        run_parallel,
                         sample_pages, screenshot_dir, select_pages, text_of)
 
 
 def extra(ap):
     ap.add_argument("--live", default=os.environ.get("QA_LIVE_URL") or qa_config()["live_url"],
                     help="the current live site (default: $QA_LIVE_URL, else qa_config.json live_url)")
-    ap.add_argument("--live-max", type=int, default=500, help="pages to crawl on live when it has no sitemap")
+    ap.add_argument("--live-max", type=int_arg(1), default=500, help="pages to crawl on live when it has no sitemap")
     ap.add_argument("--visual", action="store_true", help="screenshot main pages on live + dev and compare")
 
 
@@ -37,7 +38,7 @@ args = parse_args("Live vs dev checker", extra)
 site, urls = load_site(args)
 pages = select_pages(urls, args)
 audit = Audit("29_live_vs_dev", "Live vs Dev Report", "Migration", site)
-live = args.live.rstrip("/")
+live = normalize_base(args.live) if (args.live or "").strip() else ""   # www.example.com -> http://www.example.com
 # a whole URL segment that is a placeholder name, or a slug ending in -copy / -old / -2 (duplicated in the CMS);
 # "testing" in a real slug (/technologies/unit-testing) is a topic, not a test page
 TEST_PAGE = re.compile(r"/(test|test-?page|demo|demo-?page|sample|sample-?page|lorem(-ipsum)?|untitled(-\d+)?|draft|tmp|"
@@ -129,6 +130,10 @@ if not live_urls:
                     seen.add(link)
                     queue.append(link.split("#")[0])
 print(f"{len(live_urls)} live URLs from {source}")
+if not live_urls:
+    for what in ("live URLs exist on dev", "live vs dev content parity"):
+        audit.not_checked("Migration", what, f"no page of {live} could be read ({source})",
+                          "Check the live URL in qa_config.json / --live; the site may block bots.")
 
 
 def path_key(u):

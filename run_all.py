@@ -50,19 +50,19 @@ def main():
     import seo_common
 
     ap = argparse.ArgumentParser(description="Run all website audit scripts")
-    ap.add_argument("--base", default=seo_common.default_base(),
+    ap.add_argument("--base", type=seo_common.base_arg, default=seo_common.default_base(),
                     help="server to audit (default: $SITE_BASE_URL, else NEXT_PUBLIC_REPORT_URL from .env.local; "
                          "now %(default)s)")
     ap.add_argument("--pages", choices=("all", "sample"), help="override every script's page selection")
     ap.add_argument("--only", default="", help="comma list of script prefixes, e.g. 01,02,12a")
     ap.add_argument("--skip", default="", help="comma list of script prefixes to skip")
     ap.add_argument("--no-browser", action="store_true", help="skip Chrome-based checks (no Playwright needed)")
-    ap.add_argument("--workers", type=int, default=8)
-    ap.add_argument("--browser-workers", type=int, default=seo_common.default_browser_workers(),
+    ap.add_argument("--workers", type=seo_common.int_arg(1), default=8)
+    ap.add_argument("--browser-workers", type=seo_common.int_arg(1), default=seo_common.default_browser_workers(),
                     help="Chrome / Lighthouse runs in parallel in the browser scripts (default %(default)s)")
     ap.add_argument("--no-js-discovery", action="store_true",
                     help="don't open menus / tabs in Chrome during the crawl to find JavaScript-only links")
-    ap.add_argument("--max-pages", type=int, default=5000, help="crawl at most this many URLs")
+    ap.add_argument("--max-pages", type=seo_common.int_arg(1), default=5000, help="crawl at most this many URLs")
     ap.add_argument("--sitemap-only", action="store_true", help="audit only sitemap.xml URLs (no crawling)")
     ap.add_argument("--ignore-robots", action="store_true", help="also crawl URLs that robots.txt disallows")
     ap.add_argument("--live", default="", help="current live site for 29 (default: qa_config.json live_url)")
@@ -107,17 +107,26 @@ def main():
 
     only = {p.strip().zfill(2) if p.strip().isdigit() else p.strip() for p in args.only.split(",") if p.strip()}
     skip = {p.strip().zfill(2) if p.strip().isdigit() else p.strip() for p in args.skip.split(",") if p.strip()}
+    known = {prefix(s) for s in NUMBERED} | {prefix(m) for m in MASTERS}
+    unknown = sorted((only | skip) - known)
+    if unknown:
+        ap.error(f"unknown script prefix(es): {', '.join(unknown)} (choose from {', '.join(sorted(known))})")
     scripts = [s for s in NUMBERED if (not only or prefix(s) in only) and prefix(s) not in skip]
-    plan = []
+    if only and not scripts and not only & {prefix(m) for m in MASTERS}:
+        ap.error("--only / --skip leave no script to run")
+    plan, results = [], []
     for s in scripts:
         extra = []
         if args.no_browser and s in BROWSER_SCRIPTS:
             if BROWSER_SCRIPTS[s] is None:
+                results.append((s, "SKIPPED (--no-browser)", 0))
                 continue
             extra = BROWSER_SCRIPTS[s]
         if s.startswith("29_") and args.visual and not args.no_browser:
             extra = extra + ["--visual"]
         plan.append((s, extra))
+    if scripts and not plan:
+        ap.error(f"--no-browser skips every chosen script ({', '.join(prefix(s) for s in scripts)} need Chrome)")
     plan += [(m, []) for m in MASTERS]
 
     if not only and not skip:   # full run: start from an empty py files/report
@@ -125,7 +134,15 @@ def main():
         print("Removed all previous reports (full run)")
     # with --only / --skip each script still replaces its own previous report files
     print(f"Auditing {args.base} - {len(plan)} scripts - reports in {report_dir.relative_to(HERE.parent)}\n")
-    results = []
+    try:
+        run_plan(args, env, plan, results)
+    except KeyboardInterrupt:
+        if not results or results[-1][1] != "INTERRUPTED":
+            results.append(("(stopped with Ctrl+C)", "INTERRUPTED", 0))
+    summarize(results, report_dir)
+
+
+def run_plan(args, env, plan, results):
     if not args.sitemap_only:   # crawl once; every script reuses it (cached in the system temp folder)
         header = f"\n{'=' * 70}\n[crawl] discovering every URL of {args.base}\n{'=' * 70}"
         print(header)
@@ -145,17 +162,40 @@ def main():
         start = time.time()
         proc = subprocess.Popen([sys.executable, str(HERE / script), *extra], cwd=HERE, env=env,
                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-        for line in proc.stdout:
-            print(line, end="")
-        code = proc.wait()
+        try:
+            for line in proc.stdout:
+                print(line, end="")
+            code = proc.wait()
+        except KeyboardInterrupt:
+            proc.wait()   # the script got the same Ctrl+C; let it stop
+            results.append((script, "INTERRUPTED", int(time.time() - start)))
+            raise
         took = int(time.time() - start)
         results.append((script, "OK" if code == 0 else f"FAILED ({code})", took))
 
-    summary = "\n" + "=" * 70 + "\nRUN SUMMARY\n" + "=" * 70 + "\n" + "\n".join(
-        f"  {status:<12} {took:>5}s  {script}" for script, status, took in results)
+
+def summarize(results, report_dir):
+    stopped = any(r[1] == "INTERRUPTED" for r in results)
+    title = "RUN STOPPED WITH Ctrl+C - SUMMARY" if stopped else "ALL AUDITS COMPLETE - RUN SUMMARY"
+    summary = "\n" + "=" * 70 + f"\n{title}\n" + "=" * 70 + "\n" + "\n".join(
+        f"  {status:<22} {took:>5}s  {script}" for script, status, took in results)
     print(summary)
-    print(f"\nReports: {report_dir}/excel, /json and /csv")
-    failed = [r for r in results if r[1] != "OK"]
+    print("=" * 70)
+    failed = [r for r in results if r[1] != "OK" and not r[1].startswith("SKIPPED")]
+    passed = [r for r in results if r[1] == "OK"]
+    if failed:
+        print(f"⚠ Finished with {len(passed)} passed and {len(failed)} failed script(s): {', '.join(s for s, _, _ in failed)}")
+    else:
+        print("✓ All reports generated and audit suite completed successfully!")
+    print(f"  All generated reports saved to: {report_dir.relative_to(HERE.parent)}/")
+    print(f"    • Excel:    {report_dir.relative_to(HERE.parent)}/excel/")
+    print(f"    • JSON:     {report_dir.relative_to(HERE.parent)}/json/")
+    print(f"    • CSV:      {report_dir.relative_to(HERE.parent)}/csv/")
+    if (report_dir / "html").exists():
+        print(f"    • HTML:     {report_dir.relative_to(HERE.parent)}/html/")
+    if (report_dir / "markdown").exists():
+        print(f"    • Markdown: {report_dir.relative_to(HERE.parent)}/markdown/")
+    print("=" * 70 + "\n")
     sys.exit(1 if failed else 0)
 
 

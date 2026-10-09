@@ -30,7 +30,9 @@ ap.add_argument("--build", action="store_true", default=os.environ.get("SEO_REPO
 ap.add_argument("--no-lint", action="store_true")
 ap.add_argument("--no-typecheck", action="store_true")
 ap.add_argument("--no-npm-audit", action="store_true")
-args, _ = ap.parse_known_args()   # run_all passes the common options too
+args, extra = ap.parse_known_args()   # common options (--base, --pages ...) don't apply here
+if extra:
+    print(f"Ignoring option(s) this script doesn't use: {' '.join(extra)}")
 audit = Audit("28_repo", "Repo Audit Report", "Repository", default_base())
 ROOT = PROJECT_ROOT
 
@@ -183,6 +185,8 @@ else:
     code, out, err = run([npm, "audit", "--json"], timeout=300)
     try:
         data = json.loads(out)
+        if not isinstance(data, dict) or "error" in data:   # offline / no lockfile: npm prints {"error": {...}}
+            raise ValueError((data.get("error") or {}).get("summary", "") if isinstance(data, dict) else "")
         for name, v in (data.get("vulnerabilities") or {}).items():
             sev = v.get("severity", "")
             via = [x.get("title", "") for x in v.get("via", []) if isinstance(x, dict)]
@@ -192,8 +196,8 @@ else:
                 audit.add(F("package.json"), level, "Packages", f"Vulnerable dependency ({sev})",
                           current=f"{name} {v.get('range', '')}", element="; ".join(via)[:200],
                           fix="npm audit fix (or upgrade the package that pulls it in).")
-    except ValueError:
-        audit.not_checked("Packages", "npm audit", (err or out)[:200], "Run npm audit by hand (needs the internet).")
+    except (ValueError, AttributeError) as e:
+        audit.not_checked("Packages", "npm audit", (str(e) or err or out)[:200], "Run npm audit by hand (needs the internet).")
 
 # ------------------------------------------------------------------ ESLint
 lint_rows = []
@@ -203,9 +207,18 @@ else:
     print("ESLint ...")
     # lint the project's own committed JS / TS (not .venv, node_modules or anything else on disk)
     lint_files = [f for f in tracked if re.search(r"\.(jsx?|tsx?|mjs|cjs)$", f) and not f.startswith(("py files/", "."))]
-    code, out, err = run([npx, "--no-install", "eslint", "--no-warn-ignored", "-f", "json", *lint_files], timeout=900)
+    results, failed = [], ""
+    for i in range(0, len(lint_files), 200):   # batches keep the command line under the OS argument limit
+        code, out, err = run([npx, "--no-install", "eslint", "--no-warn-ignored", "-f", "json", *lint_files[i:i + 200]],
+                             timeout=900)
+        try:
+            batch = json.loads(out)
+            results.extend(batch if isinstance(batch, list) else [])
+        except ValueError:
+            failed = failed or (err or out)[:200] or f"eslint exited with code {code}"
     try:
-        results = json.loads(out)
+        if failed:
+            raise ValueError(failed)
         for r in results:
             rel = os.path.relpath(r["filePath"], ROOT)
             for m in r.get("messages", []):
@@ -215,8 +228,8 @@ else:
                 audit.add(F(rel), sev, "Code", f"ESLint {'error' if sev == IMPORTANT else 'warning'}: {rule}",
                           current=m.get("message", "")[:200], element=f"{rel}:{m.get('line')}",
                           fix="Fix the code at the line shown (npm run lint).")
-    except ValueError:
-        audit.not_checked("Code", "ESLint", (err or out)[:200], "Run npm run lint by hand.")
+    except ValueError as e:
+        audit.not_checked("Code", "ESLint", str(e)[:200], "Run npm run lint by hand.")
 
 # ------------------------------------------------------------------ TypeScript
 ts_rows = []

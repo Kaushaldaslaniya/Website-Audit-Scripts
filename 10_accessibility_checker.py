@@ -173,8 +173,8 @@ def browser_check(browser, loc):
             else:
                 page.add_script_tag(url=AXE_CDN)
                 violations = page.evaluate("async () => (await axe.run(document)).violations")
-        except Exception as e:
-            audit.add(loc, OPTIMIZATION, "Browser", "axe-core could not run", current=str(e)[:150])
+        except Exception as e:   # category axe-core: A11Y-01 shows it (WARN) instead of a silent PASS
+            audit.add(loc, OPTIMIZATION, "axe-core", "axe-core could not run", current=str(e)[:150])
         for v in violations:
             sev = AXE_IMPACT.get(v.get("impact"), OPTIMIZATION)
             for node in v.get("nodes", []):
@@ -234,8 +234,15 @@ def browser_check(browser, loc):
     mpage = phone.new_page()
     try:
         mpage.goto(site.to_fetch(loc), wait_until="networkidle", timeout=60000)
+        # the tap area of a link / button includes the images inside it (an inline <a> around a logo is only one
+        # text line high, but the whole logo can be tapped)
         small = mpage.evaluate(f"""() => [...document.querySelectorAll('{FOCUSABLE}')].filter(e => e.offsetParent !== null)
-            .map(e => {{ const r = e.getBoundingClientRect(); return {{w: r.width, h: r.height,
+            .map(e => {{ const r = [e, ...e.querySelectorAll('img, svg, picture, video, canvas')]
+                    .map(x => x.getBoundingClientRect()).filter(b => b.width > 0 && b.height > 0)
+                    .reduce((a, b) => ({{left: Math.min(a.left, b.left), top: Math.min(a.top, b.top),
+                                         right: Math.max(a.right, b.right), bottom: Math.max(a.bottom, b.bottom)}}),
+                            {{left: Infinity, top: Infinity, right: -Infinity, bottom: -Infinity}});
+                return {{w: Math.max(0, r.right - r.left), h: Math.max(0, r.bottom - r.top),
                 label: (e.innerText || e.getAttribute('aria-label') || e.tagName).trim().slice(0, 30),
                 inline: getComputedStyle(e).display === 'inline' && e.closest('p, li') !== null}}; }})
             .filter(t => t.w > 0 && t.h > 0 && !t.inline && (t.w < 44 || t.h < 44))""")
@@ -256,7 +263,12 @@ def browser_check(browser, loc):
         phone.close()
 
 
-if not args.no_browser:
+if args.no_browser:
+    for category, what in (("axe-core", "axe-core rules (colour contrast, ARIA)"),
+                           ("Keyboard", "keyboard navigation and visible focus"),
+                           ("Touch targets", "touch target size on a phone")):
+        audit.not_checked(category, what, "--no-browser", "Run 10_accessibility_checker.py without --no-browser.")
+else:
     targets = pages if (args.browser_pages or args.pages) == "all" else sample_pages(pages)
     print(f"Browser checks on {len(targets)} pages (axe-core: {'package' if axe else 'CDN'}, "
           f"{args.browser_workers} in parallel) ...")

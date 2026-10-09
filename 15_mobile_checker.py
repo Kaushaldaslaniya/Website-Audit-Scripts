@@ -10,6 +10,9 @@
   python "py files/15_mobile_checker.py" [--base URL] [--viewports 360x740,390x844,768x1024] [--pages sample]
   needs:  pip install playwright   (uses your installed Google Chrome)
 """
+import argparse
+import re
+
 from seo_common import (COLLECT_METRICS_JS, CRITICAL, IMPORTANT, OPTIMIZATION, PERF_INIT_SCRIPT, Audit, load_site,
                         parse_args, run_browser_pages, scroll_page, select_pages)
 
@@ -48,7 +51,13 @@ LAYOUT_JS = """
   const wideInputList = inputs.filter(i => i.getBoundingClientRect().right > vw + 1).map(i => name(i));
   const wideInputs = wideInputList.length;
   const targetList = [...document.querySelectorAll('a[href], button, input, select, textarea, [role=button]')].filter(visible)
-      .map(e => { const r = e.getBoundingClientRect(); return { w: r.width, h: r.height,
+      .map(e => { // the tap area includes images inside the link (an inline <a> around a logo is one text line high)
+        const r = [e, ...e.querySelectorAll('img, svg, picture, video, canvas')].map(x => x.getBoundingClientRect())
+          .filter(b => b.width > 0 && b.height > 0)
+          .reduce((a, b) => ({ left: Math.min(a.left, b.left), top: Math.min(a.top, b.top),
+                               right: Math.max(a.right, b.right), bottom: Math.max(a.bottom, b.bottom) }),
+                  { left: Infinity, top: Infinity, right: -Infinity, bottom: -Infinity });
+        return { w: Math.max(0, r.right - r.left), h: Math.max(0, r.bottom - r.top),
         label: name(e) + ' "' + (e.innerText || e.getAttribute('aria-label') || '').trim().slice(0, 30) + '"',
         inline: getComputedStyle(e).display === 'inline' && e.closest('p, li') !== null }; })
       .filter(t => !t.inline && (t.w < 44 || t.h < 44));
@@ -85,10 +94,23 @@ async () => {
 }
 """
 
-args = parse_args("Mobile checker", lambda ap: ap.add_argument("--viewports", default="360x740,390x844,768x1024"))
+def viewport_list(value):
+    """argparse type: '360x740,390x844' -> [(360, 740), (390, 844)] - checked before the crawl, not after it."""
+    out = []
+    for v in value.split(","):
+        m = re.fullmatch(r"\s*(\d{2,5})\s*[xX]\s*(\d{2,5})\s*", v)
+        if not m or not (200 <= int(m.group(1)) <= 4000 and 200 <= int(m.group(2)) <= 4000):
+            raise argparse.ArgumentTypeError(f"{v.strip()!r} is not WIDTHxHEIGHT between 200 and 4000 px, "
+                                             f"e.g. --viewports 360x740,390x844")
+        out.append((int(m.group(1)), int(m.group(2))))
+    return out
+
+
+args = parse_args("Mobile checker", lambda ap: ap.add_argument("--viewports", type=viewport_list,
+                                                               default="360x740,390x844,768x1024"))
 site, urls = load_site(args)
 pages = select_pages(urls, args)
-viewports = [tuple(int(x) for x in v.split("x")) for v in args.viewports.split(",")]
+viewports = args.viewports
 audit = Audit("15_mobile", "Mobile Report", "Mobile", site)
 rows = []
 

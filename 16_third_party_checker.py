@@ -160,7 +160,10 @@ def _browser_check(ctx, loc):
                   expected="<= 10")
 
 
-if not args.no_browser:
+if args.no_browser:
+    audit.not_checked("Requests", "third-party requests in Chrome (failures, speed, volume)", "--no-browser",
+                      "Run 16_third_party_checker.py without --no-browser.")
+else:
     print(f"Capturing network requests on {len(pages)} pages in Chrome ({args.browser_workers} in parallel) ...")
     run_browser_pages(browser_check, pages, args.browser_workers, "pages loaded")
     request_rows.sort(key=lambda r: r[0])

@@ -166,7 +166,7 @@ def check_ref(url):
 
 
 print(f"Requesting {len(refs)} referenced URLs ...")
-for url, status, ctype in run_parallel(check_ref, sorted(refs), args.workers, "URLs"):
+for url, status, ctype in filter(None, run_parallel(check_ref, sorted(refs), args.workers, "URLs")):
     info = refs[url]
     how = ", ".join(sorted(info["how"]))[:120]
     ref_rows.append((url, status, ctype.split(";")[0], how, len(info["pages"])))
@@ -253,13 +253,19 @@ else:
             manifest = json.loads(res["content"])
         except ValueError:
             continue
+        if not isinstance(manifest, dict):
+            audit.site(IMPORTANT, "Icons", "Manifest is not a JSON object", current=str(manifest)[:100], element=u)
+            continue
         declared = set()
-        for icon in manifest.get("icons", []):
-            src = urljoin(u, icon.get("src", ""))
+        icons = manifest.get("icons") if isinstance(manifest.get("icons"), list) else []
+        for icon in (i for i in icons if isinstance(i, dict)):
+            src = urljoin(u, str(icon.get("src", "")))
             st, info = image_info(src)
             for want in (icon.get("sizes") or "").split():
                 declared.add(want)
-                if info and f"{info[1][0]}x{info[1][1]}" != want and info[0] not in ("SVG", None):
+                # an SVG icon (Pillow can't read it: "not an image") scales to any declared size
+                svg = str(icon.get("type", "")).endswith("svg") or src.lower().split("?")[0].endswith(".svg")
+                if info and f"{info[1][0]}x{info[1][1]}" != want and info[0] not in ("SVG", None) and not svg:
                     audit.site(IMPORTANT, "Icons", "Manifest icon size doesn't match its declared size",
                                current=f"{info[1][0]}x{info[1][1]}", expected=want, element=src)
             if st != 200:

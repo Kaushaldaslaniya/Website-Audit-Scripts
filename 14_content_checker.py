@@ -13,6 +13,7 @@
 import hashlib
 import random
 import re
+import zlib
 from collections import Counter, defaultdict
 
 from seo_common import (CRITICAL, IMPORTANT, OPTIMIZATION, Audit, load_site, meta, parse_args, run_parallel,
@@ -55,7 +56,9 @@ def flesch(text):
 
 
 def minhash(words):
-    sh = {hash(" ".join(words[i:i + SHINGLE])) & 0xFFFFFFFF for i in range(max(1, len(words) - SHINGLE + 1))}
+    # crc32, not hash(): Python randomises hash() per run, so the same pages could be near-duplicates in one run and
+    # not in the next - the report must give the same result every time
+    sh = {zlib.crc32(" ".join(words[i:i + SHINGLE]).encode()) for i in range(max(1, len(words) - SHINGLE + 1))}
     return [min((h ^ s) for h in sh) for s in SEEDS] if sh else None
 
 
@@ -128,7 +131,7 @@ def check(loc):
 
 
 print(f"Reading {len(pages)} pages ...")
-rows = run_parallel(check, pages, args.workers)
+rows = [r for r in run_parallel(check, pages, args.workers) if r]
 
 # exact duplicates
 by_hash = defaultdict(list)

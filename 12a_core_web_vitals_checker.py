@@ -19,8 +19,8 @@ import shutil
 import statistics
 import subprocess
 
-from seo_common import (COLLECT_METRICS_JS, CRITICAL, IMPORTANT, OPTIMIZATION, PERF_INIT_SCRIPT, Audit, load_site,
-                        parse_args, rate, run_browser_pages, scroll_page, select_pages, simulate_interactions)
+from seo_common import (COLLECT_METRICS_JS, CRITICAL, IMPORTANT, OPTIMIZATION, PERF_INIT_SCRIPT, Audit, int_arg,
+                        load_site, parse_args, rate, run_browser_pages, scroll_page, select_pages, simulate_interactions)
 
 THRESHOLDS = {  # metric: (good, poor, unit, is_core)
     "lcp": (2500, 4000, "ms", True), "inp": (200, 500, "ms", True), "cls": (0.1, 0.25, "", True),
@@ -30,7 +30,7 @@ THRESHOLDS = {  # metric: (good, poor, unit, is_core)
 NAMES = {"lcp": "LCP", "inp": "INP", "cls": "CLS", "fcp": "FCP", "ttfb": "TTFB", "tbt": "TBT", "si": "Speed Index"}
 
 args = parse_args("Core Web Vitals checker", lambda ap: (
-    ap.add_argument("--runs", type=int, default=1, help="loads per page (median is reported)"),
+    ap.add_argument("--runs", type=int_arg(1), default=1, help="loads per page (median is reported)"),
     ap.add_argument("--desktop", action="store_true", help="desktop instead of throttled mobile"),
     ap.add_argument("--lighthouse", action="store_true", help="run Lighthouse (npx) for Speed Index")))
 site, urls = load_site(args)

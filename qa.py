@@ -55,9 +55,12 @@ def latest_checklist():
     files = sorted(REPORT_ROOT.glob("*/json/QA_Checklist_Report_*.json"), key=lambda p: p.stat().st_mtime)
     while files:
         try:
-            return json.loads(files[-1].read_text(encoding="utf-8"))
+            data = json.loads(files[-1].read_text(encoding="utf-8"))
+            if isinstance(data, dict) and isinstance(data.get("report"), dict) and isinstance(data.get("checks"), list):
+                return data
         except (OSError, ValueError):
-            files.pop()
+            pass
+        files.pop()   # unreadable / not a checklist: fall back to the one before
     return None
 
 
@@ -210,7 +213,8 @@ def cmd_mark(a):
         sys.exit(f"Unknown check {cid} (see: qa.py list)")
     human = load_human()
     if a.status == "clear":
-        human.pop(cid, None)
+        if human.pop(cid, None) is None:
+            sys.exit(f"{cid}: no manual result recorded - nothing to clear")
         print(f"{cid}: manual result removed")
     else:
         human[cid] = {"status": a.status.upper(), "note": " ".join(a.note), "by": a.by or os.environ.get("USER", ""),
@@ -229,16 +233,23 @@ def cmd_delete(a):
     if a.all:
         targets += [p for p in REPORT_ROOT.iterdir()] if REPORT_ROOT.exists() else []
     if a.date:
-        targets += [REPORT_ROOT / d for d in a.date if (REPORT_ROOT / d).exists()]
+        bad = [d for d in a.date if not re.fullmatch(r"\d{4}-\d\d-\d\d", d)]
+        if bad:   # only date folders: "..", "/" or "../.." would point outside py files/report
+            sys.exit(f"--date takes report date folders like 2026-10-07, not: {', '.join(bad)}")
+        targets += [REPORT_ROOT / d for d in a.date if (REPORT_ROOT / d).is_dir()]
     if a.report:
         known = scripts()
         names = set()
         for r in a.report:
+            r = r.zfill(2) if r.isdigit() else r   # 1 -> 01
+            if not re.fullmatch(r"[A-Za-z0-9_]+", r):
+                sys.exit(f"--report takes script numbers or report names, not: {r}")
             if r.lower() in known:
                 names.add(known[r.lower()][1])
             else:
                 names.add(r)
-        names |= {"Website_Health_Report" if "21" in a.report else "", "QA_Checklist_Report" if "30" in a.report else ""}
+        given = {r.zfill(2) if r.isdigit() else r for r in a.report}
+        names |= {"Website_Health_Report" if "21" in given else "", "QA_Checklist_Report" if "30" in given else ""}
         names.discard("")
         for n in names:
             targets += [f for f in REPORT_ROOT.glob(f"*/*/{n}_*") if re.fullmatch(re.escape(n) + r"_\d\d-\d\d-\d\d(\..+)?", f.name)]
@@ -248,14 +259,20 @@ def cmd_delete(a):
         targets += list(CRAWL_CACHE.glob("crawl_*.json"))
     if a.human and HUMAN_FILE.exists():
         targets.append(HUMAN_FILE)
-    targets = list(dict.fromkeys(targets))
+    allowed = (REPORT_ROOT.resolve(), CRAWL_CACHE.resolve())
+    targets = [t for t in dict.fromkeys(targets) if t == HUMAN_FILE or
+               any(t.resolve() != root and t.resolve().is_relative_to(root) for root in allowed)]
     if not targets:
         sys.exit("Nothing to delete (give --report / --date / --screenshots / --crawl-cache / --human / --all)")
     print("Will delete:")
     for t in targets:
         print(f"  {t}{'/' if t.is_dir() else ''}")
-    if not a.yes and input("Delete these? [y/N] ").strip().lower() not in ("y", "yes"):
-        sys.exit("Cancelled")
+    try:
+        answer = "y" if a.yes else input("Delete these? [y/N] ").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        answer = ""
+    if answer not in ("y", "yes"):
+        sys.exit("\nCancelled - nothing deleted")
     for t in targets:
         shutil.rmtree(t) if t.is_dir() else t.unlink(missing_ok=True)
     for d in sorted(REPORT_ROOT.glob("**/*"), key=lambda p: len(p.parts), reverse=True) if REPORT_ROOT.exists() else []:
@@ -284,7 +301,7 @@ def main():
     p = sub.add_parser("preview", help="show the checklist")
     p.add_argument("--status", default="", help="comma list, e.g. FAIL,WARN (default: everything but PASS)")
     p.add_argument("--all", action="store_true", help="also PASS")
-    p.add_argument("--evidence", type=int, default=0, help="show N evidence lines per check")
+    p.add_argument("--evidence", type=lambda v: max(0, int(v)), default=0, help="show N evidence lines per check")
     p.add_argument("--open", action="store_true", help="open the HTML page in the browser")
     sub.add_parser("status", help="saved reports, ages, servers, human results")
     p = sub.add_parser("mark", help="record a person's result for a check")
