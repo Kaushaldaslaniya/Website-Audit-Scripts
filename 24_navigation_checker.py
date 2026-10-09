@@ -144,6 +144,24 @@ def slug(loc):
     return (site.path(loc).strip("/").replace("/", "_") or "home")[:80]
 
 
+def stay_on(page):
+    """While menus are tested the page must not navigate away: a dropdown trigger that is a link would load another
+    page, and that page's header links would look like an opened dropdown. Other requests pass unchanged."""
+    def guard(route):
+        try:
+            req = route.request
+            leave = (req.is_navigation_request() and req.frame == page.main_frame
+                     and page.url not in ("about:blank", "") and req.url.split("#")[0] != page.url.split("#")[0])
+        except Exception:
+            leave = False
+        route.abort() if leave else route.continue_()
+    page.route("**/*", guard)
+
+
+def same_url(a, b):
+    return a.split("#")[0].rstrip("/") == b.split("#")[0].rstrip("/")
+
+
 def header_key(loc):
     res, soup = site.page(loc)
     h = soup.find("header") if soup else None
@@ -156,9 +174,11 @@ def desktop(browser, loc):
     ctx = browser.context(width=1440, height=900)
     ctx.add_init_script(COMMON_JS)
     page = ctx.new_page()
+    stay_on(page)
     r = {"page": loc, "triggers": [], "links": {}, "phone": False}
     try:
         page.goto(site.to_fetch(loc), wait_until="load", timeout=60000)
+        start_url = page.url
         page.wait_for_timeout(800)
         base = page.evaluate("() => window.__nav.links()")
         r["links"].update({k: v for k, v in nav_links(base).items() if v["inHeader"]})   # header links
@@ -176,6 +196,11 @@ def desktop(browser, loc):
                 except Exception:
                     continue
                 page.wait_for_timeout(450)
+                if not same_url(page.url, start_url):   # a client-side route change (pushState), not a dropdown
+                    page.goto(start_url, wait_until="load", timeout=60000)
+                    page.wait_for_timeout(500)
+                    page.evaluate(TRIGGERS_JS)   # the reloaded page: tag the triggers again (same order)
+                    break
                 opened = page.evaluate("() => window.__nav.fresh()")
                 items = page.evaluate("() => window.__nav.freshItems()")
                 if opened or items:
@@ -202,6 +227,7 @@ def mobile(browser, item):
     ctx = browser.context(mobile=True, width=w, height=h)
     ctx.add_init_script(COMMON_JS)
     page = ctx.new_page()
+    stay_on(page)
     r = {"page": loc, "w": w, "button": None, "tap": "", "opened": False, "links": {}, "cut": [], "subs": [],
          "closed": None, "phone": False}
     try:
@@ -409,6 +435,11 @@ for r in mob:
         if extra_mobile:
             audit.add(loc, INFO, "Menu parity", "Mobile menu has links the desktop menu doesn't",
                       current=", ".join(extra_mobile[:15]))
+
+if nav_pages and not any(r["opened"] for r in mob if r["w"] == 390):
+    # parity needs an open mobile menu (NAV-05 must not PASS when it could not be compared)
+    audit.not_checked("Menu parity", "desktop menu links missing from the mobile menu",
+                      "the mobile menu could not be opened at 390 px (see the Mobile menu issues)")
 
 # ---- zoom findings
 zoom_rows = []

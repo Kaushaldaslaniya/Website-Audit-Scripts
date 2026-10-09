@@ -10,6 +10,7 @@
   python "py files/01_sitemap_checker.py" [--base URL]
 """
 import re
+from collections import Counter
 from datetime import datetime, timezone
 from urllib import robotparser
 from urllib.parse import urljoin, urlparse
@@ -21,11 +22,32 @@ from seo_common import (CRITICAL, IMPORTANT, INFO, OPTIMIZATION, Audit, fetch, h
 
 args = parse_args("Sitemap, robots.txt & crawl coverage checker")
 site, urls = load_site(args, need_sitemap=False)
+_home = fetch(f"{site.base}/")
+if _home["status"] == 0:   # nothing answers: not "robots.txt / sitemap.xml missing", the server is down
+    raise SystemExit(f"Can't reach {site.base}/ ({_home['error'] or 'no response'}). Start the site or pass --base.")
 audit = Audit("01_sitemap", "Sitemap Report", "Technical SEO", site)
 sitemap_urls = site.sitemap_urls
 
+
+def w3c_date(value):
+    """<lastmod> -> aware datetime, or None when it isn't a W3C datetime (YYYY, YYYY-MM, YYYY-MM-DD, with time)."""
+    v = value.strip()
+    m = re.fullmatch(r"(\d{4})(?:-(\d{2}))?", v)   # year or year-month: valid W3C, not ISO for datetime
+    try:
+        d = datetime(int(m.group(1)), int(m.group(2) or 1), 1) if m else datetime.fromisoformat(v.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return d if d.tzinfo else d.replace(tzinfo=timezone.utc)
+
 # ---------------------------------------------------------------- sitemap.xml
 res = site.sitemap_response or fetch(f"{site.base}/sitemap.xml")
+for child, status, problem in site.sitemap_children:   # sitemap index: every listed sitemap must load
+    if problem:
+        audit.site(CRITICAL, "Sitemap", "Sitemap listed in the sitemap index can't be read", current=problem,
+                   element=child, expected="HTTP 200 and a valid <urlset>")
+if site.sitemap_warning:
+    audit.site(CRITICAL, "Sitemap", "sitemap.xml has no sitemaps.org namespace", current=site.sitemap_warning,
+               expected='<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
 if not sitemap_urls:
     audit.site(CRITICAL, "Sitemap", "sitemap.xml missing or invalid", site.sitemap_error or "no <url> entries",
                expected="Valid sitemap.xml listing every indexable URL")
@@ -48,8 +70,8 @@ else:
     hosts = sorted({urlparse(u).netloc for u in sitemap_urls if urlparse(u).netloc})
     if len(hosts) > 1:
         audit.site(IMPORTANT, "Sitemap", "Sitemap mixes hosts", current=", ".join(hosts))
-    raw = [l.text.strip() for l in site.sitemap_root.iter() if l.tag.endswith("loc") and l.text]
-    counts = {u: raw.count(u) for u in set(raw)}
+    # every <url> entry, including those of the child sitemaps of a sitemap index (duplicates kept)
+    counts = Counter(loc for loc, _ in site.sitemap_entries)
     for u in sorted(u for u, n in counts.items() if n > 1):
         audit.add(u, IMPORTANT, "Sitemap", "Duplicate URL in sitemap", current=f"listed {counts[u]} times",
                   expected="listed once")
@@ -60,22 +82,16 @@ else:
                       detail=f"also listed as {lower[u.lower()]}")
         lower[u.lower()] = u
     now = datetime.now(timezone.utc)
-    for entry in site.sitemap_root:
-        loc = next((c.text for c in entry if c.tag.endswith("loc")), None)
-        lastmod = next((c.text for c in entry if c.tag.endswith("lastmod")), None)
-        if not loc:
-            continue
+    for loc, lastmod in dict.fromkeys(site.sitemap_entries):
         if not lastmod:
-            audit.add(loc.strip(), OPTIMIZATION, "Sitemap", "Missing <lastmod>", current="(none)")
+            audit.add(loc, OPTIMIZATION, "Sitemap", "Missing <lastmod>", current="(none)")
             continue
-        try:
-            d = datetime.fromisoformat(lastmod.strip().replace("Z", "+00:00"))
-            if d.tzinfo is None:
-                d = d.replace(tzinfo=timezone.utc)
-            if d > now:
-                audit.add(loc.strip(), IMPORTANT, "Sitemap", "<lastmod> in the future", current=lastmod)
-        except ValueError:
-            audit.add(loc.strip(), IMPORTANT, "Sitemap", "Invalid <lastmod> date", current=lastmod)
+        d = w3c_date(lastmod)
+        if d is None:
+            audit.add(loc, IMPORTANT, "Sitemap", "Invalid <lastmod> date", current=lastmod,
+                      expected="W3C datetime, e.g. 2026-10-08 or 2026-10-08T09:30:00+05:30")
+        elif d > now:
+            audit.add(loc, IMPORTANT, "Sitemap", "<lastmod> in the future", current=lastmod)
 
 # ---------------------------------------------------------------- robots.txt
 robots = fetch(f"{site.base}/robots.txt")
@@ -103,7 +119,7 @@ else:
         audit.site(IMPORTANT, "Robots.txt", "robots.txt has no User-agent group")
 
 # ---------------------------------------------------------------- every sitemap URL
-pages = select_pages(sitemap_urls, args)
+pages = select_pages(sitemap_urls, args, required=False)   # the robots / coverage parts run even if none match
 host_mismatch = set()
 
 
@@ -146,7 +162,7 @@ def check(loc):
 
 
 print(f"Checking {len(pages)} sitemap URLs ...")
-rows = run_parallel(check, pages, args.workers)
+rows = [r for r in run_parallel(check, pages, args.workers) if r]
 for canon_host, sm_host in sorted(host_mismatch):
     audit.site(IMPORTANT, "Sitemap", "Sitemap host differs from the canonical host",
                current=f"canonical host {canon_host}, sitemap host {sm_host}",

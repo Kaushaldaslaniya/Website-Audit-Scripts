@@ -67,8 +67,9 @@ def walk(node, out):
 
 
 def types_of(entity):
+    """The entity's @type values that are text (an object or number there is invalid JSON-LD - ignored, not a crash)."""
     t = entity.get("@type")
-    return t if isinstance(t, list) else [t]
+    return [x for x in (t if isinstance(t, list) else [t]) if isinstance(x, str) and x]
 
 
 def check(loc):
@@ -105,7 +106,7 @@ def check(loc):
         if n > 1:
             audit.add(loc, IMPORTANT, "Duplicates", "Identical JSON-LD block repeated", current=f"{n} copies",
                       expected="1 copy", element=raw[:150])
-    ids = Counter(e.get("@id") for e in entities if e.get("@id") and len(e) > 2)
+    ids = Counter(e["@id"] for e in entities if isinstance(e.get("@id"), str) and e["@id"] and len(e) > 2)
     for i, n in ids.items():
         if n > 1:
             audit.add(loc, OPTIMIZATION, "Duplicates", "Same @id defined more than once", current=f"{i} defined {n} times")
@@ -146,6 +147,7 @@ def check(loc):
                           expected=f"'{k}' property on {t}", element=label)
             if t == "BreadcrumbList":
                 items = e.get("itemListElement") or []
+                items = items if isinstance(items, list) else [items]   # a single ListItem object counts as one
                 if len(items) < 2:
                     audit.add(loc, OPTIMIZATION, "Completeness", "BreadcrumbList has fewer than 2 items",
                               current=f"{len(items)} item(s)", expected="2+ items")
@@ -155,19 +157,20 @@ def check(loc):
                         audit.add(loc, IMPORTANT, "Completeness", "Breadcrumb item missing position/name/item",
                                   current=f"missing {', '.join(missing)}", element=str(it)[:150])
             if t == "FAQPage":
-                for q in e.get("mainEntity") or []:
+                questions = e.get("mainEntity") or []
+                for q in (questions if isinstance(questions, list) else [questions]):   # one Question is fine too
                     acc = q.get("acceptedAnswer") if (isinstance(q, dict) and isinstance(q.get("acceptedAnswer"), dict)) else {}
                     if not (isinstance(q, dict) and q.get("name") and acc.get("text")):
                         audit.add(loc, IMPORTANT, "Completeness", "FAQ question without name/acceptedAnswer.text",
                                   current="name or acceptedAnswer.text empty", element=str(q)[:150])
-            entity_rows.append((loc, t, e.get("@id", ""), e.get("name") or e.get("headline") or "",
+            entity_rows.append((loc, t, str(e.get("@id", "")), str(e.get("name") or e.get("headline") or ""),
                                 ", ".join(k for k in e if not k.startswith("@"))[:300]))
     return (loc, len(blocks), ", ".join(f"{t}" + (f" x{n}" if n > 1 else "") for t, n in sorted(types.items())),
             "yes" if blocks else "no")
 
 
 print(f"Checking {len(pages)} pages ...")
-rows = run_parallel(check, pages, args.workers)
+rows = [r for r in run_parallel(check, pages, args.workers) if r]
 all_types = Counter()
 for r in rows:
     for t in (r[2] or "").split(", "):

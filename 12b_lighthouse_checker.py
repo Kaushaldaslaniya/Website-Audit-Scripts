@@ -21,7 +21,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-from seo_common import (CRITICAL, IMPORTANT, OPTIMIZATION, Audit, load_site, parse_args, run_parallel, select_pages)
+from seo_common import (CRITICAL, IMPORTANT, OPTIMIZATION, Audit, int_arg, load_site, parse_args, run_parallel,
+                        select_pages)
 
 CATEGORIES = [("performance", "Performance"), ("accessibility", "Accessibility"), ("best-practices", "Best Practices"),
               ("seo", "SEO")]
@@ -33,7 +34,7 @@ PASS = 0.9   # Lighthouse shows an audit green from 0.9
 
 args = parse_args("Lighthouse audit", lambda ap: (
     ap.add_argument("--desktop", action="store_true", help="Lighthouse desktop preset instead of mobile"),
-    ap.add_argument("--timeout", type=int, default=240, help="seconds per page")))
+    ap.add_argument("--timeout", type=int_arg(1), default=240, help="seconds per page")))
 
 npx = shutil.which("npx")
 if not npx:
@@ -57,9 +58,14 @@ def chrome_path():
 
 
 env = dict(os.environ)
-if chrome_path():
-    env["CHROME_PATH"] = chrome_path()
-version = subprocess.run([npx, "--yes", "lighthouse", "--version"], capture_output=True, text=True, env=env, timeout=600)
+chrome = chrome_path()
+if chrome:
+    env["CHROME_PATH"] = chrome
+try:
+    version = subprocess.run([npx, "--yes", "lighthouse", "--version"], capture_output=True, text=True, env=env,
+                             timeout=600)
+except (OSError, subprocess.TimeoutExpired) as e:   # no network for the first download, npx hanging ...
+    sys.exit(f"Could not start Lighthouse through npx: {e}")
 if version.returncode != 0:
     sys.exit(f"Could not start Lighthouse through npx: {(version.stderr or version.stdout).strip()[:300]}")
 version = version.stdout.strip()
@@ -123,8 +129,9 @@ def run_lighthouse(loc):
         return json.loads(out.stdout), ""
     except subprocess.TimeoutExpired:
         return None, f"Lighthouse timed out after {args.timeout} s"
-    except ValueError:
-        return None, (out.stderr or "no JSON output").strip().splitlines()[-1][:300] if out.stderr else "no JSON output"
+    except ValueError:   # no JSON on stdout: the last line Lighthouse printed explains why
+        lines = (out.stderr or "").strip().splitlines()
+        return None, lines[-1][:300] if lines else "no JSON output"
 
 
 def check(loc):

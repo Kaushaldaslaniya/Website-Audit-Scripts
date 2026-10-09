@@ -187,16 +187,55 @@ QA_CONFIG_FILE = SCRIPTS_DIR / "qa_config.json"
 
 
 
+CONFIG_LISTS = ("phones", "emails", "forbidden_terms", "required_footer_links", "social_profiles", "spelling_ignore",
+                "nav_expected")
+CONFIG_TEXT = ("company", "address", "live_url")
+_warned = set()
+
+
+def warn_once(message):
+    if message not in _warned:
+        _warned.add(message)
+        print(f"WARNING: {message}", file=sys.stderr)
+
+
 def qa_config():
-    """py files/qa_config.json merged over the defaults; keys starting with '_' are comments."""
+    """py files/qa_config.json merged over the defaults; keys starting with '_' are comments.
+    Values are checked: a single text where a list is expected becomes a one-item list ("phones": "800-..." works),
+    "true" / "false" text becomes a boolean, and a value of the wrong kind is ignored with a warning - otherwise a
+    typo would silently change what the checks expect (a phone number read letter by letter, legal_site "false"
+    counting as true)."""
     cfg = {"company": "", "phones": [], "emails": [], "address": "", "live_url": "", "legal_site": False,
            "forbidden_terms": [], "required_footer_links": ["privacy", "terms"], "social_profiles": [],
            "spelling_ignore": [], "nav_expected": []}
     try:
         data = json.loads(QA_CONFIG_FILE.read_text(encoding="utf-8"))
-        cfg.update({k: v for k, v in data.items() if not k.startswith("_")})
-    except (OSError, ValueError):
-        pass
+    except OSError:
+        return cfg
+    except ValueError as e:
+        warn_once(f"{QA_CONFIG_FILE.name} is not valid JSON ({e}) - the default settings are used instead")
+        return cfg
+    if not isinstance(data, dict):
+        warn_once(f"{QA_CONFIG_FILE.name} must be a JSON object {{...}} - the default settings are used instead")
+        return cfg
+    for k, v in data.items():
+        if k.startswith("_"):
+            continue
+        if k in CONFIG_LISTS:
+            if isinstance(v, str):
+                v = [v]
+            elif not isinstance(v, list):
+                warn_once(f"{QA_CONFIG_FILE.name}: \"{k}\" must be a list, e.g. [\"...\"] - ignored")
+                continue
+            v = [str(x).strip() for x in v if x is not None and str(x).strip()]
+        elif k == "legal_site":
+            v = v.strip().lower() in ("1", "true", "yes") if isinstance(v, str) else bool(v)
+        elif k in CONFIG_TEXT:
+            if v is not None and not isinstance(v, str):
+                warn_once(f"{QA_CONFIG_FILE.name}: \"{k}\" must be text - ignored")
+                continue
+            v = (v or "").strip()
+        cfg[k] = v
     return cfg
 
 
@@ -233,17 +272,31 @@ def read_env_file_value(name, files=(".env.local", ".env")):
     return ""
 
 
+def normalize_base(url):
+    """'localhost:3000/' -> 'http://localhost:3000' (scheme added, trailing slash removed)."""
+    url = (url or "").strip().rstrip("/")
+    return url if re.match(r"(?i)https?://", url) else "http://" + url
+
+
 def default_base():
     """Server to audit: $SITE_BASE_URL, else NEXT_PUBLIC_REPORT_URL (environment, .env.local, .env),
     else http://localhost:3000."""
-    url = (os.environ.get("SITE_BASE_URL") or os.environ.get(REPORT_URL_VAR)
-           or read_env_file_value(REPORT_URL_VAR) or DEFAULT_BASE)
-    url = url.strip().rstrip("/")
-    return url if re.match(r"https?://", url) else "http://" + url
+    return normalize_base(os.environ.get("SITE_BASE_URL") or os.environ.get(REPORT_URL_VAR)
+                          or read_env_file_value(REPORT_URL_VAR) or DEFAULT_BASE)
 
 
 def env_flag(name):
     return os.environ.get(name, "").lower() in ("1", "true", "yes")
+
+
+def env_int(name, default, minimum=1):
+    """Whole-number setting from the environment (run_all.py passes SEO_WORKERS ...); invalid -> the default."""
+    raw = os.environ.get(name, "")
+    try:
+        return max(minimum, int(raw)) if raw.strip() else default
+    except ValueError:
+        print(f"Ignoring {name}={raw!r} (not a whole number) - using {default}", file=sys.stderr)
+        return default
 
 
 def default_browser_workers():
@@ -251,17 +304,51 @@ def default_browser_workers():
     return max(1, min(4, (os.cpu_count() or 2) // 2))
 
 
+def int_arg(minimum):
+    """argparse type: a whole number >= minimum (a clear message instead of odd behaviour for 0 / -1)."""
+    def convert(value):
+        try:
+            n = int(value)
+        except (TypeError, ValueError):
+            raise argparse.ArgumentTypeError(f"must be a whole number, got {value!r}")
+        if n < minimum:
+            raise argparse.ArgumentTypeError(f"must be {minimum} or more, got {n}")
+        return n
+    return convert
+
+
+def regex_arg(value):
+    """argparse type: a valid regular expression."""
+    try:
+        re.compile(value)
+    except re.error as e:
+        raise argparse.ArgumentTypeError(f"not a valid regular expression ({e}) - escape special characters, "
+                                         f"e.g. --only '/blog/'")
+    return value
+
+
+def base_arg(value):
+    """argparse type: the server URL, normalised; it needs a host name."""
+    url = normalize_base(value)
+    if not urlparse(url).hostname:
+        raise argparse.ArgumentTypeError(f"not a server URL: {value!r} (e.g. http://localhost:3000)")
+    return url
+
+
 def parse_args(description, extra=None, default_pages="all"):
     ap = argparse.ArgumentParser(description=description)
-    ap.add_argument("--base", default=default_base(),
+    ap.add_argument("--base", type=base_arg, default=default_base(),
                     help=f"server to audit (default: $SITE_BASE_URL, else {REPORT_URL_VAR} from .env.local, "
                          f"else {DEFAULT_BASE}; now %(default)s)")
-    ap.add_argument("--workers", type=int, default=int(os.environ.get("SEO_WORKERS", 8)))
-    ap.add_argument("--limit", type=int, default=0, help="only the first N pages")
-    ap.add_argument("--only", default="", help="regex: only pages whose URL matches")
-    ap.add_argument("--pages", choices=("all", "sample"), default=os.environ.get("SEO_PAGES", default_pages),
+    ap.add_argument("--workers", type=int_arg(1), default=env_int("SEO_WORKERS", 8),
+                    help="parallel requests (default %(default)s)")
+    ap.add_argument("--limit", type=int_arg(0), default=0, help="only the first N pages (0 = no limit)")
+    ap.add_argument("--only", type=regex_arg, default="", help="regex: only pages whose URL matches")
+    ap.add_argument("--pages", choices=("all", "sample"),
+                    default=os.environ.get("SEO_PAGES") if os.environ.get("SEO_PAGES") in ("all", "sample")
+                    else default_pages,
                     help="all discovered pages, or one sample per page type (default: %(default)s)")
-    ap.add_argument("--max-pages", type=int, default=int(os.environ.get("SEO_MAX_PAGES", 5000)),
+    ap.add_argument("--max-pages", type=int_arg(1), default=env_int("SEO_MAX_PAGES", 5000),
                     help="crawl at most this many URLs (default %(default)s)")
     ap.add_argument("--sitemap-only", action="store_true", default=env_flag("SEO_SITEMAP_ONLY"),
                     help="audit only sitemap.xml URLs (no crawling)")
@@ -269,8 +356,8 @@ def parse_args(description, extra=None, default_pages="all"):
                     help="crawl again even if a recent crawl of this server exists")
     ap.add_argument("--ignore-robots", action="store_true", default=env_flag("SEO_IGNORE_ROBOTS"),
                     help="also crawl URLs that robots.txt disallows")
-    ap.add_argument("--browser-workers", type=int,
-                    default=int(os.environ.get("SEO_BROWSER_WORKERS") or default_browser_workers()),
+    ap.add_argument("--browser-workers", type=int_arg(1),
+                    default=env_int("SEO_BROWSER_WORKERS", default_browser_workers()),
                     help="Chrome instances running in parallel in the browser checks (default %(default)s)")
     ap.add_argument("--no-js-discovery", action="store_true", default=env_flag("SEO_NO_JS_DISCOVERY"),
                     help="don't open menus / tabs in Chrome to find links that only appear after JavaScript")
@@ -362,6 +449,14 @@ def _bare_host(host):
     return host[4:] if host.startswith("www.") else host
 
 
+SITEMAP_NS = "http://www.sitemaps.org/schemas/sitemap/0.9"
+
+
+def _xml_name(tag):
+    """XML tag without its namespace: '{http://...}url' -> 'url'."""
+    return tag.rsplit("}", 1)[-1] if isinstance(tag, str) else ""
+
+
 class Site:
     def __init__(self, base):
         self.base = base.rstrip("/")
@@ -370,12 +465,29 @@ class Site:
         self.site_scheme = None
         self.sitemap_urls = []
         self.sitemap_error = ""
+        self.sitemap_warning = ""      # the file was read, but has a problem search engines reject (no namespace)
+        self.sitemap_entries = []      # every <url> as (loc, lastmod) incl. the child sitemaps - duplicates kept
+        self.sitemap_children = []     # sitemap index: (child sitemap URL, HTTP status, problem or "")
         self.sitemap_root = None
         self.sitemap_response = None
         self.crawl = None          # crawl result (see crawl_site), None with --sitemap-only
 
     # sitemap ---------------------------------------------------------------
+    def _entries(self, root):
+        """(loc, lastmod) of every <url> of a <urlset>; notes a missing sitemaps.org namespace."""
+        out = []
+        for u in root:
+            if _xml_name(u.tag) != "url":
+                continue
+            if not u.tag.startswith("{" + SITEMAP_NS + "}"):
+                self.sitemap_warning = f'the <urlset> has no sitemaps.org namespace (xmlns="{SITEMAP_NS}")'
+            loc = next((c.text.strip() for c in u if _xml_name(c.tag) == "loc" and (c.text or "").strip()), None)
+            if loc:
+                out.append((loc, next((c.text.strip() for c in u if _xml_name(c.tag) == "lastmod" and c.text), None)))
+        return out
+
     def load_sitemap(self):
+        """sitemap.xml, and every sitemap of a sitemap index -> the page URLs (each once)."""
         import xml.etree.ElementTree as ET
         res = fetch(f"{self.base}/sitemap.xml")
         self.sitemap_response = res
@@ -387,15 +499,24 @@ class Site:
         except ET.ParseError as e:
             self.sitemap_error = f"invalid XML: {e}"
             return []
-        ns = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
-        urls = [u.text.strip() for u in root.findall("sm:url/sm:loc", ns) if u.text]
-        for child in root.findall("sm:sitemap/sm:loc", ns):  # sitemap index
-            sub = fetch(self.to_fetch(child.text.strip()))
-            try:
-                urls += [u.text.strip() for u in ET.fromstring(sub["content"]).findall("sm:url/sm:loc", ns) if u.text]
-            except ET.ParseError:
-                pass
         self.sitemap_root = root
+        entries = self._entries(root)
+        for child in (e for e in root if _xml_name(e.tag) == "sitemap"):   # sitemap index
+            loc = next((c.text.strip() for c in child if _xml_name(c.tag) == "loc" and (c.text or "").strip()), "")
+            if not loc:
+                continue
+            sub = fetch(self.to_fetch(loc))
+            problem = "" if sub["status"] == 200 else f"HTTP {sub['status']} {sub['error']}".strip()
+            if not problem:
+                try:
+                    found = self._entries(ET.fromstring(sub["content"]))
+                    entries += found
+                    problem = "" if found else "no <url> entries"
+                except ET.ParseError as e:
+                    problem = f"invalid XML: {e}"
+            self.sitemap_children.append((loc, sub["status"], problem))
+        self.sitemap_entries = entries
+        urls = [loc for loc, _ in entries]
         if urls:
             host = Counter(urlparse(u).netloc for u in urls).most_common(1)[0][0]
             self.site_host = host
@@ -451,10 +572,16 @@ def norm(url):
     return urlunparse((p.scheme, p.netloc.lower(), path or "/", "", p.query, ""))
 
 
-def select_pages(urls, args):
-    """Apply --only / --pages sample / --limit."""
+def select_pages(urls, args, required=True):
+    """Apply --only / --pages sample / --limit. A --only pattern that matches no page stops the script (exit 2):
+    an empty report would score 100 and turn every check it decides into a false PASS."""
+    found = len(urls)
     if args.only:
         urls = [u for u in urls if re.search(args.only, u)]
+        if required and found and not urls:
+            print(f"No page URL matches --only {args.only!r} ({found} pages found). The pattern is a regular "
+                  f"expression searched in the full URL, e.g. --only /blog/")
+            sys.exit(2)
     if args.pages == "sample":
         urls = sample_pages(urls)
     if args.limit:
@@ -548,7 +675,8 @@ def discover_links(soup, page_url):
         except (ValueError, TypeError):
             pass
         for u in urls:
-            if u.startswith(("http", "/")):
+            # a URL template (SearchAction target ".../search?q={search_term_string}") is not a page
+            if u.startswith(("http", "/")) and "{" not in u:
                 add(u, "json-ld")
     return found
 
@@ -770,6 +898,8 @@ def _load_cached_crawl(site, args):
         except (ValueError, OSError):
             continue
         st = data.get("stats", {})
+        if (st.get("html_pages") or 0) <= 0:
+            continue
         if data.get("base") == site.base and st.get("max_pages") == args.max_pages \
                 and st.get("respect_robots") == (not args.ignore_robots) \
                 and (st.get("js_discovery", False) or not want_js_discovery(args)):
@@ -801,10 +931,11 @@ def load_site(args, need_sitemap=True):
         if data is None:
             data = crawl_site(site, args.max_pages, args.workers, respect_robots=not args.ignore_robots,
                               js_discovery=want_js_discovery(args), browser_workers=args.browser_workers)
-            try:
-                crawl_cache_path().write_text(json.dumps(data, default=list))
-            except OSError:
-                pass
+            if (data.get("stats", {}).get("html_pages") or 0) > 0:
+                try:
+                    crawl_cache_path().write_text(json.dumps(data, default=list))
+                except OSError:
+                    pass
         site.crawl = data
         if not site.site_host:   # no sitemap: report URLs on the audited host
             site.site_host, site.site_scheme = site.base_host, urlparse(site.base).scheme
@@ -816,7 +947,15 @@ def load_site(args, need_sitemap=True):
         pages.sort(key=lambda k: not recs[k]["in_sitemap"])   # sitemap pages first, then crawl order
         urls = pages
     if need_sitemap and not urls:
-        print(f"No pages found at {site.base} (sitemap: {site.sitemap_error or 'ok'}). Is the site running?")
+        recs = list(((site.crawl or {}).get("records") or {}).values())
+        if recs and all(r.get("robots_blocked") for r in recs):
+            why = "robots.txt blocks every URL - add --ignore-robots to audit the site anyway"
+        elif recs and any(r.get("status") for r in recs):
+            seen = Counter(str(r.get("status") or r.get("error") or "?") for r in recs)
+            why = f"no page answered HTTP 200 with HTML (answers: {', '.join(f'{k} x{n}' for k, n in seen.most_common(5))})"
+        else:
+            why = f"sitemap: {site.sitemap_error or 'ok'}. Is the site running?"
+        print(f"No pages found at {site.base} ({why}).")
         sys.exit(2)
     if site.crawl:
         extra = sum(1 for u in urls if not site.crawl["records"][u]["in_sitemap"])
@@ -824,14 +963,39 @@ def load_site(args, need_sitemap=True):
     return site, urls
 
 
+def item_failed(item, error, label):
+    """An unexpected error on one page / URL: print it and record it as "Not checked" in the running report (the QA
+    checklist then shows SKIP, never a silent PASS) - one odd page must not stop a report of hundreds of pages."""
+    msg = f"{type(error).__name__}: {error}"
+    print(f"  ! {str(item)[:120]}: {msg[:200]}", flush=True)
+    audit = Audit.current
+    if audit is not None:
+        url = item if isinstance(item, str) and item.startswith("http") else SITE_WIDE
+        audit.add(url, INFO, "Script error", f"Not checked: {label} (the script failed on this item)",
+                  current=msg[:300], element=str(item)[:200], expected="the check runs",
+                  fix="Re-run the script; if the error repeats, report it with the URL so the script can be fixed.",
+                  description="The script raised an error while checking this item, so its result is unknown "
+                              "(not a pass).")
+
+
 def run_parallel(func, items, workers, label="pages"):
+    """func(item) for every item on `workers` threads -> results in item order (None where func failed)."""
     from concurrent.futures import ThreadPoolExecutor
     results, total = [], len(items)
+
+    def safe(item):
+        try:
+            return func(item)
+        except Exception as e:   # noqa: BLE001 - recorded as "Not checked" for that item
+            item_failed(item, e, label)
+            return None
+
     with ThreadPoolExecutor(max(1, workers)) as ex:
-        for i, r in enumerate(ex.map(func, items), 1):
+        for i, r in enumerate(ex.map(safe, items), 1):
             results.append(r)
-            if i % 50 == 0 or i == total:
-                print(f"  {i}/{total} {label}")
+            if i % 10 == 0 or i == total:
+                pct = int((i / total) * 100) if total else 100
+                print(f"  {i}/{total} {label} ({pct}%)", flush=True)
     return results
 
 
@@ -988,15 +1152,19 @@ class Browser:
         self.close()
 
 
-def scroll_page(page, step=600, pause=120):
-    """Scroll to the bottom and back so lazy content / scroll animations load."""
+def scroll_page(page, step=600, pause=120, max_steps=80):
+    """Scroll to the bottom and back so lazy content / scroll animations load. At most max_steps stops (~10 s):
+    a very tall page is scrolled in bigger steps instead of taking minutes."""
     page.evaluate(
-        """async ([step, pause]) => {
+        """async ([step, pause, maxSteps]) => {
             const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-            for (let y = 0; y < document.documentElement.scrollHeight; y += step) { window.scrollTo(0, y); await sleep(pause); }
+            const s = Math.max(step, Math.ceil(document.documentElement.scrollHeight / maxSteps));
+            for (let y = 0, n = 0; y < document.documentElement.scrollHeight && n < maxSteps; y += s, n++) {
+                window.scrollTo(0, y); await sleep(pause);
+            }
             window.scrollTo(0, 0); await sleep(pause);
         }""",
-        [step, pause],
+        [step, pause, max_steps],
     )
 
 
@@ -1028,13 +1196,14 @@ def run_browser_pages(func, items, workers, label="pages"):
                         browser.close()
                         browser = Browser()
                     results[i] = func(browser, item)
-                except Exception as e:
-                    print(f"  ! {item}: {type(e).__name__}: {str(e)[:150]}")
+                except Exception as e:   # noqa: BLE001 - recorded as "Not checked" for that item
+                    item_failed(item if not isinstance(item, tuple) else item[0], e, label)
                 with lock:
                     done[0] += 1
                     n = done[0]
                 if n % 10 == 0 or n == len(items):
-                    print(f"  {n}/{len(items)} {label}", flush=True)
+                    pct = int((n / len(items)) * 100) if items else 100
+                    print(f"  {n}/{len(items)} {label} ({pct}%)", flush=True)
         finally:
             try:
                 browser.close()
@@ -1186,8 +1355,10 @@ def clip(value, limit=2000):
 
 class Audit:
     """Collects issues + extra sheets, scores them and saves the Excel + JSON report and the summary JSON."""
+    current = None   # the report this script is building (run_parallel records per-item errors in it)
 
     def __init__(self, key, title, category, site=""):
+        Audit.current = self
         self.key, self.title, self.category = key, title, category
         self.web = site if isinstance(site, Site) else None   # the Site (crawl info for the URL columns)
         self.base = site.base if isinstance(site, Site) else site
@@ -1425,9 +1596,24 @@ class Audit:
         write_csv(csv_path, [h for _, h, _ in ISSUE_COLUMNS], ([i.get(k, "") for k, _, _ in ISSUE_COLUMNS]
                                                               for i in self.issues))
 
-        print(f"\n{self.title}: score {score} ({grade(score)}) | {counts[CRITICAL]} critical, "
-              f"{counts[IMPORTANT]} important, {counts[OPTIMIZATION]} optimization")
-        print(f"Saved {rel_path(path)}\n      {rel_path(json_path)}\n      {rel_path(csv_path)}")
+        # the HTML page some reports write next to these files (looked up, not created: no empty html/ folder)
+        html_page = REPORT_ROOT / run_date() / FORMAT_DIRS["html"] / f"{name}_{run_time()}.html"
+        failed = sum(1 for i in self.issues if i["category"] == "Script error")
+        print("\n" + "=" * 70)
+        print(f"✓ {self.title} - Report generated successfully!")
+        print("=" * 70)
+        print(f"  • Excel Report:  {rel_path(path)}")
+        print(f"  • JSON Report:   {rel_path(json_path)}")
+        print(f"  • CSV Report:    {rel_path(csv_path)}")
+        if html_page.exists():
+            print(f"  • HTML Report:   {rel_path(html_page)}")
+        print("-" * 70)
+        print(f"  Score: {score}/100 ({grade(score)}) | {counts[CRITICAL]} critical, {counts[IMPORTANT]} important, {counts[OPTIMIZATION]} optimization, {counts[INFO]} info")
+        print(f"  Pages Checked: {len(self.pages)} | Total Issues: {len(self.issues)}")
+        if failed:
+            print(f"  ⚠ {failed} item(s) could not be checked because of a script error - listed as "
+                  f"'Not checked' (category Script error) in the report")
+        print("=" * 70 + "\n")
         return path
 
 
@@ -1480,13 +1666,15 @@ def write_sheet(ws, headers, rows, widths=None, severity_col=None, fills=None):
     for cell in ws[1]:
         cell.font = Font(bold=True, color="FFFFFF")
         cell.fill = FILLS["header"]
+    row_no = ws.max_row   # counted here: ws.max_row scans every cell, so calling it per row is quadratic
     for r in rows:
         ws.append([clean_cell(v) for v in r])
+        row_no += 1
         if severity_col:
-            cell = ws.cell(row=ws.max_row, column=severity_col)
+            cell = ws.cell(row=row_no, column=severity_col)
             cell.fill = FILLS.get(cell.value, FILLS["ok"])
         for col, rule in (fills or {}).items():
-            cell = ws.cell(row=ws.max_row, column=col)
+            cell = ws.cell(row=row_no, column=col)
             color = rule if isinstance(rule, str) else rule.get(cell.value)
             if color and cell.value not in (None, ""):
                 cell.fill = _fill(color)
@@ -1551,12 +1739,20 @@ COLLECT_METRICS_JS = """
 
 INTERACTION_TARGET_JS = """
 (i) => {
-  const t = [...document.querySelectorAll('h1, h2, p, button:not([type=submit]), [role=tab], summary')]
-      .filter(e => e.offsetParent !== null && !e.closest('a, form'))[i];
-  if (!t) return null;
-  t.scrollIntoView({ block: 'center' });
-  const r = t.getBoundingClientRect();
-  return { x: r.x + Math.min(8, r.width / 2), y: r.y + Math.min(8, r.height / 2) };
+  // the i-th element that is safe to click: the click point must not land on a link, a form or a submit button
+  // (a paragraph that starts with a tel: / page link would otherwise leave the page that is being measured)
+  const all = [...document.querySelectorAll('h1, h2, p, button:not([type=submit]), [role=tab], summary')]
+      .filter(e => e.offsetParent !== null && !e.closest('a, form'));
+  let n = 0;
+  for (const t of all) {
+    t.scrollIntoView({ block: 'center' });
+    const r = t.getBoundingClientRect();
+    const x = r.x + Math.min(8, r.width / 2), y = r.y + Math.min(8, r.height / 2);
+    const hit = document.elementFromPoint(x, y);
+    if (!hit || hit.closest('a[href], form, [type=submit], [role=link]')) continue;
+    if (n++ === i) return { x, y };
+  }
+  return null;
 }
 """
 

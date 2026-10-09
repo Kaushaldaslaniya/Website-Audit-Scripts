@@ -130,7 +130,7 @@ def check(loc):
 
 
 print(f"Checking {len(pages)} pages ...")
-rows = run_parallel(check, pages, args.workers)
+rows = [r for r in run_parallel(check, pages, args.workers) if r]
 
 for field, check_name in (("title", "Duplicate title"), ("description", "Duplicate description")):
     groups = defaultdict(list)

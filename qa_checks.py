@@ -185,13 +185,13 @@ CHECKS = [
     Check("ENG-01", "English content", "No spelling mistakes in the page text",
           "AUTO", [S("31_english", None, r"^spelling$"), S("31_english", r"spelling and grammar")], owner="content"),
     Check("ENG-02", "English content", "No grammar mistakes (verb forms, agreement, repeated phrases)",
-          "AUTO", [S("31_english", None, r"^grammar$"), S("31_english", r"spelling and grammar")], owner="content"),
+          "AUTO", [S("31_english", None, r"^grammar$"), S("31_english", r"\(LanguageTool\)")], owner="content"),
     Check("ENG-03", "English content", "Spacing correct (space after full stops / commas, none before them)",
-          "AUTO", [S("31_english", None, r"^spacing$"), S("31_english", r"spelling and grammar")], owner="content"),
+          "AUTO", [S("31_english", None, r"^spacing$"), S("31_english", r"\(LanguageTool\)")], owner="content"),
     Check("ENG-04", "English content", "Punctuation and typography reviewed (commas, hyphens, capitalisation)",
-          "AUTO", [S("31_english", None, r"^(punctuation|typographical)$")], fail=NEVER, owner="content"),
+          "AUTO", [S("31_english", None, r"^(punctuation|typographical)$"), S("31_english", r"\(LanguageTool\)")], fail=NEVER, owner="content"),
     Check("ENG-05", "English content", "Possible word misuse reviewed (their / there, in / on the website ...)",
-          "AUTO+HUMAN", [S("31_english", None, r"^word misuse$")], fail=NEVER, owner="content",
+          "AUTO+HUMAN", [S("31_english", None, r"^word misuse$"), S("31_english", r"\(LanguageTool\)")], fail=NEVER, owner="content",
           how="Read the WARN items of the English Grammar report; real names / terms can be ignored."),
 
     # ------------------------------------------------------------------ forms

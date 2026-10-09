@@ -126,7 +126,8 @@ def _measure(ctx, loc):
     page = ctx.new_page()
     responses, failed, sheets = [], [], {}
     page.on("response", lambda r: responses.append(r))
-    page.on("requestfailed", lambda r: failed.append((r.url, r.failure)))
+    # only web requests: a tel: / mailto: link reached by a simulated click is "aborted" by Chrome, not a failure
+    page.on("requestfailed", lambda r: failed.append((r.url, r.failure)) if r.url.startswith("http") else None)
     cdp = ctx.new_cdp_session(page)
     cdp.on("CSS.styleSheetAdded", lambda e: sheets.__setitem__(e["header"]["styleSheetId"], e["header"].get("length", 0)))
     try:

@@ -182,6 +182,8 @@ def scan(loc):
     # ---- written phone numbers / emails (visible text only)
     for s in body.find_all(string=True):
         parent = s.parent
+        if type(s).__name__ != "NavigableString":   # <!-- comments --> / CDATA are not shown to visitors
+            continue
         if parent is None or parent.name in ("script", "style", "noscript", "template", "title"):
             continue
         text = str(s)

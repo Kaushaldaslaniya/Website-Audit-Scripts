@@ -1,8 +1,8 @@
 """
 03 - Heading structure checker (H1-H6)
-  Same rules as heading_checker.py (first heading is H1, no skipped level going down) plus:
-  exactly one H1, empty headings, very long headings, duplicate headings on a page,
-  H1 that only repeats the brand, and the full outline of every page.
+  The heading-order rules of 17 (first heading is H1, no skipped level going down) plus:
+  no headings at all, exactly one H1, empty headings, very long headings (> 90 characters), duplicate H1-H3
+  text on a page, and the full outline of every page.
 
   python "py files/03_heading_checker.py" [--base URL]
 """
@@ -73,7 +73,7 @@ def check(loc):
 
 
 print(f"Checking {len(pages)} pages ...")
-rows = run_parallel(check, pages, args.workers)
+rows = [r for r in run_parallel(check, pages, args.workers) if r]
 rows.sort(key=lambda r: (r[9] == "Correct", r[0]))
 audit.note("Pages with valid hierarchy", sum(1 for r in rows if r[9] == "Correct"))
 audit.sheet("Heading Order", ["URL", "HTTP", "H1", "H2", "H3", "H4", "H5", "H6", "Heading Order", "Status", "Issue"], rows,

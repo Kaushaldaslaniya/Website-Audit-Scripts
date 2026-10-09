@@ -8,6 +8,7 @@
 
   python "py files/30_qa_checklist_report.py"
 """
+import argparse
 import html
 import json
 import os
@@ -17,7 +18,7 @@ from datetime import datetime
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 
-from qa_checks import CHECKS, SCRIPT_FOR_REPORT, SECTIONS
+from qa_checks import BY_ID, CHECKS, SCRIPT_FOR_REPORT, SECTIONS
 from seo_common import (CRITICAL, IMPORTANT, INFO, OPTIMIZATION, REPORT_ROOT, SCRIPTS_DIR, SEVERITY_ORDER, SITE_WIDE,
                         qa_config, rel_path, remove_old_reports, report_path, write_csv, write_sheet)
 
@@ -51,12 +52,30 @@ def load_reports():
 
 
 def load_human():
+    """qa_human_checks.json (written by qa.py mark); an entry without a valid status is ignored with a warning."""
     try:
-        return json.loads(HUMAN_FILE.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
+        data = json.loads(HUMAN_FILE.read_text(encoding="utf-8"))
+    except OSError:
         return {}
+    except ValueError as e:
+        print(f"WARNING: {HUMAN_FILE.name} is not valid JSON ({e}) - the recorded human results are ignored")
+        return {}
+    if not isinstance(data, dict):
+        print(f"WARNING: {HUMAN_FILE.name} must be a JSON object - the recorded human results are ignored")
+        return {}
+    out = {}
+    for cid, entry in data.items():
+        if str(cid).upper() not in BY_ID:
+            print(f"WARNING: {HUMAN_FILE.name}: {cid} ignored (no such check - see qa.py list)")
+        elif isinstance(entry, dict) and str(entry.get("status", "")).upper() in ("PASS", "FAIL", "WARN", "SKIP"):
+            out[str(cid).upper()] = entry
+        else:
+            print(f"WARNING: {HUMAN_FILE.name}: {cid} ignored (needs a status pass / fail / warn / skip - use qa.py mark)")
+    return out
 
 
+# no options: -h shows this help instead of rebuilding the checklist, and an unknown option is an error
+argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter).parse_args()
 reports = load_reports()
 human = load_human()
 cfg = qa_config()
@@ -68,6 +87,8 @@ for key, data in reports.items():
     items += [dict(i, url=SITE_WIDE) for i in data.get("site_wide_issues", [])]
     issues_by_report[key] = items
 crawl = next((r["report"].get("crawl") for r in reports.values() if r["report"].get("crawl")), {}) or {}
+# items a script could not check (an unexpected error on that page / URL): no check that reads that report may PASS
+script_errors = {key: [i for i in items if i.get("category") == "Script error"] for key, items in issues_by_report.items()}
 html_pages = crawl.get("html_pages") or 0
 
 
@@ -126,6 +147,14 @@ def evaluate(check):
         else:
             res["auto_status"] = "PASS"
             res["result"] = "no issues found" + (f" ({len(info)} note(s))" if info else "")
+        errors = [i for k in check.reports for i in script_errors.get(k, [])]
+        if errors and res["auto_status"] == "PASS":
+            res["auto_status"] = "SKIP"
+            res["result"] = (f"not checked on {len(errors)} item(s) - the script failed there "
+                             f"({errors[0]['current_value'][:120]})")
+            res["evidence"] = errors + res["evidence"]
+        elif errors and not any(i in res["evidence"] for i in errors):
+            res["result"] += f" [+{len(errors)} item(s) not checked: script error]"
         if missing and res["auto_status"] != "SKIP":
             res["result"] += f" [not run: {', '.join(missing)}]"
         if res["partial"]:
@@ -371,8 +400,20 @@ write_csv(cpath, headers, rows)
 mpath.write_text("\n".join(md), encoding="utf-8")
 hpath.write_text(page, encoding="utf-8")
 
-print(f"\nQA CHECKLIST: {verdict}")
-print("  " + "  ".join(f"{s} {counts[s]}" for s in STATUS_ORDER))
-for r in by_status["FAIL"]:
-    print(f"  FAIL  {r['id']:<8} {r['title'][:70]}")
-print(f"Saved {rel_path(xlsx)}\n      {rel_path(jpath)}\n      {rel_path(cpath)}\n      {rel_path(mpath)}\n      {rel_path(hpath)}")
+print("\n" + "=" * 70)
+print("✓ QA Checklist Master Report generated successfully!")
+print("=" * 70)
+print(f"  • Excel Report:    {rel_path(xlsx)}")
+print(f"  • JSON Report:     {rel_path(jpath)}")
+print(f"  • CSV Report:      {rel_path(cpath)}")
+print(f"  • Markdown Report: {rel_path(mpath)}")
+print(f"  • HTML Report:     {rel_path(hpath)}")
+print("-" * 70)
+print(f"  Verdict: {verdict} | " + "  ".join(f"{s}: {counts[s]}" for s in STATUS_ORDER))
+if by_status["FAIL"]:
+    print(f"  Failing Checks ({len(by_status['FAIL'])}):")
+    for r in by_status["FAIL"][:8]:
+        print(f"    ✗ {r['id']:<8} {r['title'][:65]}")
+    if len(by_status["FAIL"]) > 8:
+        print(f"    ... and {len(by_status['FAIL']) - 8} more failures (see HTML/Excel report)")
+print("=" * 70 + "\n")

@@ -13,7 +13,7 @@
 """
 import re
 from collections import Counter
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 from bs4 import BeautifulSoup
 
@@ -21,7 +21,18 @@ from seo_common import (CRITICAL, IMPORTANT, OPTIMIZATION, Audit, describe, fetc
                         meta, norm, parse_args, run_parallel, select_pages, text_of)
 
 DEPRECATED = ["center", "font", "marquee", "blink", "frame", "frameset", "big", "strike", "tt", "acronym", "applet"]
-REACT_ATTRS = re.compile(r"\s(classname|htmlfor|onclick=\"\{|tabindex=\"\{)", re.I)
+
+
+def leaked_jsx(soup):
+    """React prop names that reached the HTML as attributes (className, htmlFor, onClick="{...}"). Only real
+    attributes count: a page that shows code samples ("<span className=...>") has the same words in its text."""
+    found = set()
+    for el in soup.find_all(True):
+        for attr, val in el.attrs.items():
+            text = " ".join(val) if isinstance(val, list) else str(val)
+            if attr in ("classname", "htmlfor") or (attr in ("onclick", "tabindex") and text.startswith("{")):
+                found.add(attr if attr in ("classname", "htmlfor") else f'{attr}="{{...}}"')
+    return found
 
 args = parse_args("Technical SEO checker")
 site, urls = load_site(args)
@@ -202,7 +213,7 @@ def check(loc):
         if n > 1:
             audit.add(loc, IMPORTANT, "HTML", "Duplicate IDs", current=f'id="{dup_id}" used {n} times', expected="unique id",
                       element=", ".join(describe(t, 60) for t in soup.find_all(id=dup_id)[:3]))
-    for a in soup.find_all("a"):
+    for a in soup.find_all("a", href=True):   # <a name="top"> without href is a jump target, not a link
         if not text_of(a) and not a.get("aria-label") and not a.find("img", alt=True) and not a.get("title"):
             audit.add(loc, IMPORTANT, "HTML", "Empty links (no text / name)", current="(no text or accessible name)",
                       element=describe(a))
@@ -230,8 +241,8 @@ def check(loc):
         if inner:
             audit.add(loc, OPTIMIZATION, "HTML", "Block element inside <p> (browser rewrites the DOM)",
                       current=f"<{inner.name}> inside <p>", element=describe(p))
-    for m in set(REACT_ATTRS.findall(raw)):
-        audit.add(loc, IMPORTANT, "HTML", "Invalid attribute in HTML (JSX attribute leaked)", current=m.strip())
+    for m in sorted(leaked_jsx(soup)):
+        audit.add(loc, IMPORTANT, "HTML", "Invalid attribute in HTML (JSX attribute leaked)", current=m)
     if soup.body and soup.body.find("title"):
         audit.add(loc, IMPORTANT, "HTML", "<title> inside <body>", current=text_of(soup.body.find("title"))[:100])
     row["bytes"] = len(res["content"])
@@ -239,7 +250,7 @@ def check(loc):
 
 
 print(f"Checking {len(pages)} pages ...")
-rows = run_parallel(check, pages, args.workers)
+rows = [r for r in run_parallel(check, pages, args.workers) if r]
 for m in sorted(host_mismatch):
     audit.site(IMPORTANT, "Canonical", "Canonical URLs use a different host than the sitemap", current=m,
                detail="sitemap.xml and canonical tags must both use NEXT_PUBLIC_SITE_URL")

@@ -248,7 +248,10 @@ if home:
         mres = fetch(urljoin(site.base + "/", man_link["href"]))
         try:
             manifest = json.loads(mres["content"])
-            sizes = " ".join(i.get("sizes", "") for i in manifest.get("icons", []))
+            if not isinstance(manifest, dict):
+                raise TypeError("the manifest is not a JSON object")
+            icons = manifest.get("icons") if isinstance(manifest.get("icons"), list) else []
+            sizes = " ".join(str(i.get("sizes", "")) for i in icons if isinstance(i, dict))
             for key in ("name", "short_name", "start_url", "display", "theme_color", "background_color"):
                 if not manifest.get(key):
                     audit.site(OPTIMIZATION, "Browser metadata", f"Manifest missing {key}")
@@ -295,7 +298,11 @@ def _browser_check(ctx, loc):
         audit.add(loc, CRITICAL, "Runtime", "Uncaught JavaScript error", current=t[:300])
     for t in dict.fromkeys(errs):
         audit.add(loc, IMPORTANT, "Runtime", "Console errors", current=t[:300])
-    for u, st in failed:
+    worst = {}
+    for u, st in failed:   # a 404 answer is often followed by a "failed" event for the same URL: report it once
+        if u not in worst or isinstance(st, int):
+            worst[u] = st
+    for u, st in worst.items():
         if "/_next/" in u:
             audit.add(loc, CRITICAL, "Production health", "Missing /_next asset", current=str(st), element=u[:200])
         else:
@@ -309,10 +316,13 @@ def _browser_check(ctx, loc):
         audit.add(loc, IMPORTANT, "Rendering", "Most content is rendered client-side only",
                   current=f"{ssr_words} words in server HTML, {csr_words} after JavaScript",
                   expected="most words already in the server HTML")
-    browser_rows.append((loc, len(errs), len(hydration), len(errors), len(failed), len(bad_api), ssr_words, csr_words))
+    browser_rows.append((loc, len(errs), len(hydration), len(errors), len(worst), len(bad_api), ssr_words, csr_words))
 
 
-if not args.no_browser:
+if args.no_browser:
+    audit.not_checked("Runtime", "console errors, hydration errors and failed requests in Chrome", "--no-browser",
+                      "Run 13_nextjs_checker.py without --no-browser.")
+else:
     print(f"Loading {len(pages)} pages in Chrome (console, hydration, failed requests; "
           f"{args.browser_workers} in parallel) ...")
     run_browser_pages(browser_check, pages, args.browser_workers, "pages loaded")

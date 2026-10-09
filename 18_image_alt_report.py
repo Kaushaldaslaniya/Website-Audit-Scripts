@@ -56,7 +56,7 @@ def analyze(loc):
 
 
 print(f"Checking image alt text on {len(pages)} pages ...")
-rows = run_parallel(analyze, pages, args.workers)
+rows = [r for r in run_parallel(analyze, pages, args.workers) if r]
 rows.sort(key=lambda r: ({"Error": 0, "Warning": 1}.get(r[5], 2), r[0]))
 issue_rows.sort(key=lambda r: (r[0], r[1]))
 audit.note("Images checked", sum(r[1] for r in rows if isinstance(r[1], int)))

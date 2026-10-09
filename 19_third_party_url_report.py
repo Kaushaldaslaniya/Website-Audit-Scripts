@@ -12,7 +12,7 @@ from collections import defaultdict
 from datetime import datetime
 from urllib.parse import urljoin, urlparse
 
-from seo_common import (CRITICAL, IMPORTANT, OPTIMIZATION, Audit, fetch, load_site, parse_args, run_parallel,
+from seo_common import (CRITICAL, IMPORTANT, OPTIMIZATION, Audit, fetch, int_arg, load_site, parse_args, run_parallel,
                         select_pages)
 
 TAGS = {  # tag -> (attributes holding a URL, label)
@@ -24,7 +24,8 @@ TAGS = {  # tag -> (attributes holding a URL, label)
 SKIP = ("#", "mailto:", "tel:", "javascript:", "data:", "blob:", "sms:", "about:")
 BLOCKED = (401, 403, 429, 999)
 
-args = parse_args("Third-party URL report", lambda ap: ap.add_argument("--timeout", type=int, default=20))
+args = parse_args("Third-party URL report", lambda ap: ap.add_argument("--timeout", type=int_arg(1), default=20,
+                                                                      help="seconds per URL (default %(default)s)"))
 site, urls = load_site(args)
 pages = select_pages(urls, args)
 import threading
@@ -86,13 +87,15 @@ def check(url):
 print(f"Collecting third-party URLs from {len(pages)} pages ...")
 run_parallel(collect, pages, args.workers)
 print(f"Checking {len(used)} unique third-party URLs ...")
-results = dict(run_parallel(check, sorted(used), args.workers, "third-party URLs"))
+results = dict(r for r in run_parallel(check, sorted(used), args.workers, "third-party URLs") if r)
 checked_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 summary_rows = []
 domains = defaultdict(lambda: {"count": 0, "pages": set(), "urls": set(), "failing": 0})
 for url, uses in sorted(used.items()):
-    r = results[url]
+    r = results.get(url)
+    if r is None:
+        continue   # the check failed for this URL: recorded as "Not checked"
     host = urlparse(url).netloc.lower()
     d = domains[host]
     for page, kind in uses:

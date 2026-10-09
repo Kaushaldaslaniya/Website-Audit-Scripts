@@ -89,6 +89,8 @@ def collect(loc):
 
 print(f"Reading {len(pages)} pages ...")
 run_parallel(collect, pages, args.workers)
+page_order = {p: n for n, p in enumerate(pages)}
+all_imgs.sort(key=lambda t: (page_order.get(t[0], len(pages)), t[1]))   # same row order on every run
 unique = sorted({src for *_, src, _ in all_imgs})
 print(f"Checking {len(unique)} unique images ...")
 info = dict(zip(unique, run_parallel(lambda s: probe(site.to_fetch(s) if site.is_internal(s) else s), unique,
@@ -98,7 +100,7 @@ for loc, index, img, src, alts in all_imgs:
     alt = img.get("alt")
     decorative = img.get("aria-hidden") == "true" or img.get("role") in ("presentation", "none")
     name, original = real_name(src)
-    i = info.get(src, {})
+    i = info.get(src) or {}   # {} when the image check itself failed (recorded as "Not checked")
     issues = []
 
     def flag(sev, msg, current="", expected=None):
@@ -148,7 +150,7 @@ for loc, index, img, src, alts in all_imgs:
         if nat and w and int(float(w)) and nat[0] > 2.5 * int(float(w)) and not img.get("srcset"):
             flag(OPTIMIZATION, "Image pixels much larger than displayed", f"{nat[0]}x{nat[1]} px file for width={w}",
                  f"about {int(float(w)) * 2} px wide (2x display size)")
-    except ValueError:
+    except (ValueError, OverflowError):   # width="100%", "auto", "NaN", "Infinity" ...
         pass
 
     # loading & responsive

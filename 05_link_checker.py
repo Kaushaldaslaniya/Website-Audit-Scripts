@@ -13,7 +13,7 @@
 """
 import re
 from collections import defaultdict, deque
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 from seo_common import (CRITICAL, IMPORTANT, OPTIMIZATION, Audit, fetch, follow_redirects, load_site,
                         parse_args, run_parallel, select_pages, text_of)
@@ -59,15 +59,23 @@ def scan(loc):
         return
     targets, count = set(), 0
     for a in soup.find_all("a"):
+        if not a.has_attr("href") and (a.get("name") or a.get("id")) and not text_of(a):
+            continue   # <a name="top"> / <a id="x">: a jump target, not a link
         href = (a.get("href") or "").strip()
         label = anchor_text(a)
         if not href:
             audit.add(loc, IMPORTANT, "Links", "Empty link (no href)", current='href=""', element=f"<a> '{label[:60]}'")
             continue
-        if href.startswith(("#", "mailto:", "tel:", "javascript:", "sms:")):
-            if href.startswith("javascript:"):
-                audit.add(loc, IMPORTANT, "Links", "javascript: link", current=href[:100], element=f"<a> '{label[:60]}'")
-            elif href in ("#", "#!") and a.get("role") != "button":
+        scheme = urlparse(href).scheme.lower() if re.match(r"[A-Za-z][\w+.-]*:", href) else ""
+        if scheme and scheme not in ("http", "https", "javascript"):
+            # mailto:, tel:, sms:, whatsapp:, ftp: ... open an app, not a web page: nothing to request over HTTP
+            link_rows.append((loc, href[:250], f"other ({scheme}:)", label[:80], ""))
+            continue
+        if scheme == "javascript":   # any letter case: JavaScript:void(0)
+            audit.add(loc, IMPORTANT, "Links", "javascript: link", current=href[:100], element=f"<a> '{label[:60]}'")
+            continue
+        if href.startswith("#"):
+            if href in ("#", "#!") and a.get("role") != "button":
                 audit.add(loc, IMPORTANT, "Links", "Placeholder link (href=\"#\")", current=f'href="{href}"',
                           element=f"<a> '{label[:60]}'")
             elif href.startswith("#") and len(href) > 1 and not soup.find(id=href[1:]) \
@@ -156,7 +164,10 @@ def probe_internal(target):
 
 
 print(f"Checking {len(internal_targets)} internal link targets ...")
-for target, final, hops, loop in run_parallel(probe_internal, sorted(internal_targets), args.workers, "links"):
+for item in run_parallel(probe_internal, sorted(internal_targets), args.workers, "links"):
+    if not item:
+        continue   # the check failed for this target: recorded as "Not checked"
+    target, final, hops, loop = item
     sources = internal_targets[target]
     path = site.path(target) + (f"?{target.split('?', 1)[1]}" if "?" in target else "")
     redirects = len(hops) - 1
@@ -192,7 +203,10 @@ if not args.no_external:
         return target, res
 
     print(f"Checking {len(external_targets)} external links ...")
-    for target, res in run_parallel(probe_external, sorted(external_targets), args.workers, "external links"):
+    for item in run_parallel(probe_external, sorted(external_targets), args.workers, "external links"):
+        if not item:
+            continue
+        target, res = item
         sources = external_targets[target]
         st = res["status"]
         if st in (401, 403, 429, 999):
@@ -208,6 +222,9 @@ if not args.no_external:
         else:
             result = "OK"
         status_rows.append((target[:250], "external", st, result, res["error"], len(sources), sorted(sources)[0] if sources else ""))
+else:
+    audit.not_checked("External links", "broken external links", "--no-external",
+                      "Run 05_link_checker.py without --no-external (or rely on 19_third_party_url_report.py).")
 
 # ------------------------------------------------------------ architecture (whole-site link graph from the crawl)
 if site.crawl:

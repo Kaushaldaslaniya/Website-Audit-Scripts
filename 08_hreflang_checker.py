@@ -26,7 +26,7 @@ ISO_LANG = set("aa ab af ak am an ar as av ay az ba be bg bh bi bm bn bo br bs c
                "xh yi yo za zh zu".split())
 
 args = parse_args("hreflang checker", lambda ap: ap.add_argument("--languages", default="en,it,de,fr,es"))
-LANGS = [l.strip() for l in args.languages.split(",") if l.strip()] or ["en"]
+LANGS = list(dict.fromkeys(l.strip().lower() for l in args.languages.split(",") if l.strip())) or ["en"]
 DEFAULT_LANG = LANGS[0]
 site, urls = load_site(args)
 pages = select_pages(urls, args)
@@ -56,7 +56,7 @@ def check(loc):
     html_lang = (soup.html.get("lang", "") if soup.html else "").lower()
     if not html_lang:
         audit.add(loc, IMPORTANT, "Language", "Missing <html lang>", current="(none)", expected=f'<html lang="{DEFAULT_LANG}">')
-    elif html_lang.split("-")[0] != DEFAULT_LANG:
+    elif html_lang.split("-")[0] != DEFAULT_LANG.split("-")[0]:
         audit.add(loc, IMPORTANT, "Language", "Default-language page has a different <html lang>", current=html_lang,
                   expected=DEFAULT_LANG)
 
@@ -81,7 +81,7 @@ def check(loc):
                 audit.add(loc, IMPORTANT, "hreflang", "hreflang URL is not absolute", current=raw, expected=href)
             alt_rows.append((loc, code, href))
         for lang in LANGS:
-            if not any(c.lower().split("-")[0] == lang for c in codes):
+            if not any(c == lang or c.split("-")[0] == lang for c in codes):   # 'en' matches en-GB; 'en-gb' only en-GB
                 audit.add(loc, OPTIMIZATION, "hreflang", "Language missing from hreflang", current=f"no '{lang}'",
                           expected=f'<link rel="alternate" hreflang="{lang}" href="...">')
         if "x-default" not in codes:

@@ -36,7 +36,9 @@
 import hashlib
 import html
 import re
+import sys
 import threading
+import time
 from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -93,7 +95,7 @@ TECH_WORDS = {
     "nodejs", "expressjs", "nestjs", "fastify", "koa", "django", "flask", "fastapi",
     "springboot", "laravel", "rails", "aspnet", "graphql", "grpc", "restful", "webhook",
     "webhooks", "orm", "prisma", "drizzle", "typeorm", "sequelize", "mongoose",
-    "strapi", "contentful", "sanity", "payload", "wordpress", "woocommerce", "shopify",
+    "strapi", "contentful", "sanity", "wordpress", "woocommerce", "shopify",
     "bigcommerce", "magento", "drupal", "postgresql", "postgres", "mysql", "sqlite",
     "mongodb", "redis", "memcached", "cassandra", "dynamodb", "couchdb", "mariadb",
     "supabase", "firebase", "firestore", "elasticsearch", "opensearch", "solr", "qdrant",
@@ -284,6 +286,7 @@ print(f"{sum(len(i['blocks']) for i in page_info.values())} text sections, {len(
 
 # ------------------------------------------------------------------ 2. LanguageTool
 matches = []          # (text, match)
+lt_checked = set()    # texts LanguageTool checked without an error (its spelling verdict is trusted for them)
 tool = None
 try:
     import language_tool_python as ltp
@@ -300,7 +303,7 @@ try:
         tool.disabled_categories.update({"STYLE", "REDUNDANCY", "PLAIN_ENGLISH", "WIKIPEDIA"})
 except Exception as e:   # no Java / download failed / no internet for the public API
     reason = f"{type(e).__name__}: {str(e)[:150]}"
-    audit.not_checked("English", "grammar (LanguageTool)", reason,
+    audit.not_checked("English", "grammar, spacing and punctuation (LanguageTool)", reason,
                       "Install Java 17+ (brew install openjdk) or run with --public-api for grammar checks.")
 
 try:   # word frequencies of the pyspellchecker library: rank spelling suggestions by how common the word is
@@ -309,6 +312,9 @@ try:   # word frequencies of the pyspellchecker library: rank spelling suggestio
     _FREQ = _SPELL.word_frequency
 except ImportError:
     _SPELL = _FREQ = None
+if not tool and not _SPELL:
+    audit.not_checked("English", "spelling and grammar", "neither LanguageTool nor pyspellchecker is available",
+                      'pip install -r "py files/requirements.txt" (and Java 17+ for LanguageTool)')
 
 
 def edit_distance(a, b):
@@ -321,15 +327,24 @@ def edit_distance(a, b):
     return prev[-1]
 
 
+_ranked_cache = {}
+
+
 def ranked(word, replacements):
     """LanguageTool's spelling suggestions plus the dictionary words 1-2 edits away, most likely first: same start of
     the word first, then frequency (10x less per extra edit) - 'vehical' -> vehicle, not vesical / medical."""
     if not _FREQ:
         return list(replacements)
     low = word.lower()
+    cache_key = (low, tuple(replacements[:6]))
+    if cache_key in _ranked_cache:
+        return _ranked_cache[cache_key]
     pool = list(replacements[:6])
     if word.isalpha() and len(word) < 25:
-        pool += sorted(_SPELL.known(_SPELL.edit_distance_1(low)) | _SPELL.known(_SPELL.edit_distance_2(low)))
+        d1 = sorted(_SPELL.known(_SPELL.edit_distance_1(low)))
+        pool += d1
+        if len(pool) < 4:
+            pool += sorted(_SPELL.known(_SPELL.edit_distance_2(low)))
     pool = [c.capitalize() if word[:1].isupper() and c.islower() else c for c in pool if c.lower() != low]
     pool = list(dict.fromkeys(pool))
 
@@ -343,7 +358,9 @@ def ranked(word, replacements):
         d = edit_distance(low, c.lower())
         return (d > 2, -prefix(c), -(_FREQ[c.lower()] if c.replace(" ", "").isalpha() else 0) / 10 ** d,
                 pool.index(c))
-    return sorted(pool, key=score)[:6] if pool else list(replacements)
+    res = sorted(pool, key=score)[:6] if pool else list(replacements)
+    _ranked_cache[cache_key] = res
+    return res
 
 
 def is_compound_word(w):
@@ -384,17 +401,38 @@ if tool:
         batches.append(cur)
     lock = threading.Lock()
     done = [0]
+    failed_batches = []
+
+    def lt_check(text):
+        """tool.check in pieces of at most BATCH_CHARS cut at a space (one huge text block crashes LanguageTool);
+        offsets are shifted back so they point into text."""
+        out, start = [], 0
+        while start < len(text):
+            end = min(len(text), start + BATCH_CHARS)
+            if end < len(text):
+                cut = text.rfind(" ", start + BATCH_CHARS // 2, end)
+                end = cut + 1 if cut > 0 else end
+            for m in tool.check(text[start:end]):
+                m.offset += start
+                out.append(m)
+            start = end
+        return out
 
     def check(batch):
-        joined = "\n\n".join(batch)
+        # control characters (a stray NUL byte ...) crash LanguageTool's tokenizer; a space keeps every offset
+        joined = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", " ", "\n\n".join(batch))
         starts, pos = [], 0
         for t in batch:
             starts.append(pos)
             pos += len(t) + 2
         try:
-            found = tool.check(joined)
+            found = lt_check(joined)
+            with lock:
+                lt_checked.update(batch)
         except Exception as e:
             print(f"  ! LanguageTool failed on a batch: {str(e)[:120]}")
+            with lock:
+                failed_batches.append(str(e)[:150])
             found = []
         out = []
         for m in found:
@@ -405,18 +443,24 @@ if tool:
                 out.append((text, local, m))
         with lock:
             done[0] += 1
-            if done[0] % 10 == 0 or done[0] == len(batches):
-                print(f"  {done[0]}/{len(batches)} batches checked")
+            pct = int((done[0] / len(batches)) * 100) if batches else 100
+            if done[0] % 5 == 0 or done[0] == len(batches):
+                print(f"  {done[0]}/{len(batches)} batches checked with LanguageTool ({pct}%)", flush=True)
         return out
 
-    print(f"Checking {len(batches)} batches with LanguageTool ({args.language}) ...")
+    print(f"Checking {len(batches)} batches with LanguageTool ({args.language}) ...", flush=True)
     with ThreadPoolExecutor(1 if args.public_api else 3) as ex:
         for out in ex.map(check, batches):
             matches += out
+    print(f"LanguageTool check complete: {len(matches)} initial matches found across all batches.", flush=True)
     try:
         tool.close()
     except Exception:
         pass
+    if failed_batches:   # those texts got only the spelling scan below - say so instead of a silent PASS
+        audit.not_checked("English", f"grammar, spacing and punctuation (LanguageTool) on {len(failed_batches)} of "
+                          f"{len(batches)} text batches", failed_batches[0],
+                          "Run the script again (the public API is rate-limited; locally check Java / memory).")
 
 
 # ------------------------------------------------------------------ 3. classify + filter false positives
@@ -433,15 +477,24 @@ def issue_type(m):
 # Pure-python spellchecker scan: ensures no misspelled words (e.g. 'teechnologies') are missed,
 # even if LanguageTool was offline, rate-limited, or skipped them in a batch.
 if _SPELL:
+    cand_cache = {}
     existing_typo_spans = {(text, start) for text, start, m in matches if issue_type(m) == "Spelling"}
-    for text in unique:
+    words_to_check = set()
+    # only text LanguageTool did not check (offline, public-API limit, failed batch): where it did, its dictionary
+    # (much larger than pyspellchecker's: tech, onboarding, deliverables ...) already accepted the word
+    unchecked = [t for t in unique if t not in lt_checked]
+    for text in unchecked:
         for match_obj in re.finditer(r"\b[A-Za-z][A-Za-z'’-]*\b", text):
             raw_w = match_obj.group(0).strip("'’")
             low = raw_w.lower()
             start = match_obj.start()
             if (text, start) in existing_typo_spans:
                 continue
-            if len(raw_w) <= 2 or low in IGNORE or low in _SPELL or is_compound_word(low):
+            if len(raw_w) <= 2 or len(raw_w) > 18 or low in IGNORE or low in _SPELL or low in slug_words \
+                    or is_compound_word(low):
+                continue
+            plain = low.replace("’", "'")   # we’ll, doesn’t, Anthropic's: contractions / possessives of known words
+            if plain in _SPELL or ("'" in plain and plain.split("'")[0] in _SPELL):
                 continue
             if re.search(r"[\d._/@#+]", raw_w) or (raw_w.isupper() and len(raw_w) <= 6) or re.search(r"[a-z][A-Z]|[A-Z]{2}[a-z]", raw_w):
                 continue
@@ -449,8 +502,31 @@ if _SPELL:
                 continue
             if "-" in raw_w or not re.search(r"[aeiouy]", low):
                 continue
+            if raw_w[:1].isupper() and (len(word_pages.get(low, ())) >= 2 or word_blocks.get(low, 0) >= 3):
+                continue
+            words_to_check.add(low)
+
+    if words_to_check:
+        total_w = len(words_to_check)
+        print(f"Refining spelling checks: scanning {total_w} candidate words for typos ...", flush=True)
+        for idx, low in enumerate(words_to_check, 1):
+            if idx % 10 == 0 or idx == total_w:
+                pct = int((idx / total_w) * 100) if total_w else 100
+                print(f"  {idx}/{total_w} words checked for spelling ({pct}%)", flush=True)
             cands = _SPELL.candidates(low) or set()
+            cand_cache[low] = sorted(cands)   # sorted: the same suggestions on every run
+
+    for text in unchecked:
+        for match_obj in re.finditer(r"\b[A-Za-z][A-Za-z'’-]*\b", text):
+            raw_w = match_obj.group(0).strip("'’")
+            low = raw_w.lower()
+            start = match_obj.start()
+            if (text, start) in existing_typo_spans:
+                continue
+            cands = cand_cache.get(low)
             if not cands:
+                continue
+            if text[max(0, start - 1):start] in (".", "/", "@", "#", "-", "_") or text[start + len(raw_w):][:1] in ("/", "_"):
                 continue
             cands_list = ranked(raw_w, list(cands))
             best = cands_list[0]
@@ -503,8 +579,8 @@ def keep(text, start, m, kind):
         low_w = w.lower()
         if not m.replacements:
             return None                                   # no dictionary word close by: a name / term
-        if low_w in IGNORE:
-            return None
+        if low_w in IGNORE or low_w in slug_words:
+            return None                                   # the site's own URL vocabulary (/technologies/prisma-...)
         if _SPELL and w.isalpha() and w.islower() and _SPELL.known([low_w]):
             return None                                   # a real dictionary word: not a misspelling
         if re.search(r"[\d._/@#+]", w) or (w.isupper() and len(w) <= 6) or re.search(r"[a-z][A-Z]|[A-Z]{2}[a-z]", w):
@@ -564,7 +640,18 @@ def keep(text, start, m, kind):
 SEVERITY = {"Spelling": IMPORTANT, "Grammar": IMPORTANT, "Spacing": IMPORTANT, "Punctuation": OPTIMIZATION,
             "Typographical": OPTIMIZATION, "Word misuse": OPTIMIZATION, "Style": INFO}
 detail_rows, page_issues, seen = [], defaultdict(list), set()
-for text, start, m in matches:
+
+total_matches = len(matches)
+print(f"Classifying, ranking, and filtering {total_matches} potential issues ...", flush=True)
+last_progress_time = time.time()
+
+for idx, (text, start, m) in enumerate(matches, 1):
+    now = time.time()
+    if now - last_progress_time >= 3 or idx == total_matches or (total_matches > 50 and idx % max(1, total_matches // 20) == 0):
+        pct = int((idx / total_matches) * 100) if total_matches else 100
+        print(f"  Filtering & validating issues: {idx}/{total_matches} ({pct}% completed)...", flush=True)
+        last_progress_time = now
+
     kind = issue_type(m)
     if kind == "Style" and not args.style:
         continue
@@ -619,7 +706,7 @@ for text, start, m in matches:
         detail_rows.append(row)
         page_issues[url].append(row)
 
-# ------------------------------------------------------------------ 4. URL results, summary, sheets
+print(f"Issues processed: {len(detail_rows)} confirmed issues found. Compiling URL results and summary...", flush=True)
 url_rows, status_count = [], Counter()
 for loc in pages:
     info = page_info.get(loc, {"title": "", "lang": "", "blocks": [], "note": "not read"})
@@ -657,9 +744,6 @@ detail_rows.sort(key=lambda r: (r["Status"] != "FAIL", r["URL"], r["Issue type"]
 audit.sheet("Issue details", cols, [[r[c] for c in cols] for r in detail_rows],
             (18, 50, 30, 8, 13, 12, 25, 60, 60, 30, 50, 45, 11, 30, 40),
             fills={4: STATUS_COLORS, 7: WRONG_COLOR, 8: WRONG_COLOR, 9: EXPECTED_COLOR, 10: EXPECTED_COLOR})
-audit.sheet("Summary counts", ["Measure", "Value"], summary, (36, 30))
-audit.save("English_Grammar_Report")
-
 # ------------------------------------------------------------------ 5. HTML page (wrong = red, expected = green)
 E = html.escape
 cards = "".join(f'<div class="card {k.lower()}"><b>{status_count[k]}</b>{k} pages</div>' for k in ("PASS", "WARN", "FAIL", "SKIP"))
@@ -711,8 +795,13 @@ background:var(--card);color:var(--fg);cursor:pointer}}
 <button data-f="PASS">PASS</button><button data-f="SKIP">SKIP</button></div>{''.join(url_html)}</main>
 <script>document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>document.querySelectorAll('.url').forEach(u=>
 u.style.display=b.dataset.f==='ALL'||u.dataset.s===b.dataset.f?'':'none'));</script></body></html>"""
+print("Generating HTML report and saving Excel, CSV, JSON...", flush=True)
 hpath = report_path("English_Grammar_Report", "html")
 hpath.write_text(page, encoding="utf-8")
-print(f"      {rel_path(hpath)}")
-print("  " + " | ".join(f"{a}: {b}" for a, b in summary[:5]) + f" | PASS {status_count['PASS']}, WARN "
-      f"{status_count['WARN']}, FAIL {status_count['FAIL']}, SKIP {status_count['SKIP']}")
+
+audit.sheet("Summary counts", ["Measure", "Value"], summary, (36, 30))
+audit.save("English_Grammar_Report")
+
+print("  " + " | ".join(f"{a}: {b}" for a, b in summary[:5]))
+print(f"  Status: PASS {status_count['PASS']} | WARN {status_count['WARN']} | FAIL {status_count['FAIL']} | SKIP {status_count['SKIP']}\n")
+sys.exit(0)

@@ -29,7 +29,7 @@ from urllib.parse import urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup
 
-from seo_common import (CRITICAL, IMPORTANT, OPTIMIZATION, Audit, fetch, load_site, meta, norm, parse_args,
+from seo_common import (CRITICAL, IMPORTANT, OPTIMIZATION, Audit, fetch, int_arg, load_site, meta, norm, parse_args,
                         run_parallel, select_pages, text_of)
 
 try:
@@ -73,7 +73,7 @@ args = parse_args("SEO report (all-in-one)", lambda ap: (
     ap.add_argument("--external", action="store_true", help="check third-party links too"),
     ap.add_argument("--hreflang", action="store_true", help="request every hreflang alternate URL"),
     ap.add_argument("--psi-key", default="", help="PageSpeed Insights API key (public sites only)"),
-    ap.add_argument("--psi-limit", type=int, default=10)))
+    ap.add_argument("--psi-limit", type=int_arg(0), default=10, help="pages sent to PageSpeed Insights")))
 site, urls = load_site(args)
 pages = select_pages(urls, args)
 audit = Audit("20_seo_report", "SEO Report (all-in-one)", "On-Page SEO", site)
@@ -117,7 +117,7 @@ else:
                expected="the live https domain (NEXT_PUBLIC_SITE_URL)")
     dupes = [u for u, n in Counter(site.sitemap_urls).items() if n > 1]
     glob_check("No duplicate sitemap URLs", IMPORTANT, not dupes, ", ".join(dupes[:10]))
-    lastmods = sum(1 for l in site.sitemap_root.iter() if l.tag.endswith("lastmod")) if site.sitemap_root is not None else 0
+    lastmods = sum(1 for _, lastmod in site.sitemap_entries if lastmod)   # child sitemaps of an index included
     glob_check("Sitemap entries have <lastmod>", OPTIMIZATION, lastmods >= len(site.sitemap_urls),
                f"{lastmods}/{len(site.sitemap_urls)}")
 
@@ -466,7 +466,7 @@ def audit_page(loc):
 
 
 print(f"Auditing {len(pages)} pages ...")
-results = run_parallel(audit_page, pages, args.workers)
+results = [r for r in run_parallel(audit_page, pages, args.workers) if r]
 page_data = [p for p, _, _ in results]
 all_images = [img for _, imgs, _ in results for img in imgs]
 all_links = {p["url"]: links for p, _, links in results}
@@ -502,8 +502,8 @@ internal, external = defaultdict(dict), defaultdict(dict)
 for page, links in all_links.items():
     for href, label_, is_internal in links:
         (internal if is_internal else external)[href].setdefault(page, label_)
-for href, res in run_parallel(lambda h: (h, fetch(site.to_fetch(h), allow_redirects=False)), list(internal), args.workers,
-                              "internal links"):
+for href, res in filter(None, run_parallel(lambda h: (h, fetch(site.to_fetch(h), allow_redirects=False)),
+                                            list(internal), args.workers, "internal links")):
     sources, status = internal[href], res["status"]
     if status >= 400 or status == 0:
         for p, label_ in sources.items():
@@ -517,8 +517,8 @@ for href, res in run_parallel(lambda h: (h, fetch(site.to_fetch(h), allow_redire
         link_rows.append((site.path(href), "internal", status, f"redirects to {res['location']}", len(sources),
                           sorted(sources)[0]))
 if args.external:
-    for href, res in run_parallel(lambda h: (h, fetch(h, "HEAD", timeout=20)), list(external), args.workers,
-                                  "external links"):
+    for href, res in filter(None, run_parallel(lambda h: (h, fetch(h, "HEAD", timeout=20)), list(external),
+                                                args.workers, "external links")):
         sources, status = external[href], res["status"]
         if status in (401, 403, 429, 999):
             link_rows.append((href, "external", status, "unverified (site blocks bots)", len(sources), sorted(sources)[0]))
@@ -546,8 +546,8 @@ if not args.only and not args.limit and args.pages == "all":
 unique = defaultdict(list)
 for row in all_images:
     unique[urljoin(site.to_fetch(row["page"]), row["src"])].append(row)
-for src, res in run_parallel(lambda s: (s, fetch(site.to_fetch(s) if site.is_internal(s) else s)), list(unique),
-                             args.workers, "images"):
+for src, res in filter(None, run_parallel(lambda s: (s, fetch(site.to_fetch(s) if site.is_internal(s) else s)),
+                                           list(unique), args.workers, "images")):
     for row in unique[src]:
         if res["status"] != 200:
             row["issue"].append((IMPORTANT, "Broken image", f"HTTP {res['status']}"))
@@ -568,7 +568,8 @@ if args.hreflang:
     for p in page_data:
         for href in p.get("hreflang_urls", []):
             targets[href].add(p["url"])
-    for href, res in run_parallel(lambda h: (h, fetch(site.to_fetch(h), "HEAD")), list(targets), args.workers, "hreflang"):
+    for href, res in filter(None, run_parallel(lambda h: (h, fetch(site.to_fetch(h), "HEAD")), list(targets),
+                                                args.workers, "hreflang")):
         if res["status"] != 200:
             for p in targets[href]:
                 audit.add(p, IMPORTANT, "hreflang", "Broken hreflang alternate", current=f"HTTP {res['status']}", element=href)
